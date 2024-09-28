@@ -1,0 +1,27 @@
+services:
+  rated_api:
+    restart: always
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/src/app
+    environment:
+      - ENV=development
+    develop:
+      watch:
+        - action: sync
+          path: /src
+          target: /src
+    depends_on:
+      - rated_db
+  rated_db:
+    image: postgres:latest
+    container_name: rated_db
+    restart: always
+    expose:
+      - "5432"
+    env_file:
+      - .env.local
+    volumes:
+      - ./postgres:/var/lib/postgresql/data # persists the data locally after image removal
