@@ -18,14 +18,14 @@ services:
 
   log_generator:
     build:
-      context: ./  # we need the context to be wide because shared python packages like config that are required in service.
+      context: ./  # We need the context to be wide because shared Python packages like config that are required in the service.
       dockerfile: src/log_generator/Dockerfile
     environment:
       LOG_BATCH_SIZE: ${LOG_BATCH_SIZE}
       LOG_INTERVAL_SECONDS: ${LOG_INTERVAL_SECONDS}
       LOG_FILE_PATH: ${LOG_FILE_PATH}
     volumes:
-      - "./log_generator/logs:/log_generator"  # We need to mount this volume so that logs are stored outside of container and log processor can use it.
+       - "./src/log_generator/:/log_generator/"
     restart: unless-stopped
 
   rated_influxdb2:
