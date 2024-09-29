@@ -28,4 +28,4 @@ class Config:
 
     @staticmethod
     def get_log_generator_log_file_path() -> str:
-        return os.getenv('LOG_FILE_PATH', 'api_requests.log')
+        return os.getenv('LOG_FILE_PATH')
