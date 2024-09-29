@@ -4,8 +4,14 @@ import datetime
 import time
 import logging
 
-logging.basicConfig(filename="script.log", level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    handlers=[
+        logging.FileHandler('log_generator.log'),
+        logging.StreamHandler()
+    ]
+)
 
 # These env variable are used to continuously append logs so bytewax stream can continue streaming logs to influx db.
 log_batch_size = int(os.getenv("LOG_BATCH_SIZE", 100))
