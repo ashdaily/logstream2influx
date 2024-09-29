@@ -14,14 +14,38 @@ services:
           path: /src
           target: /src
     depends_on:
-      - rated_db
-  rated_db:
-    image: postgres:latest
-    container_name: rated_db
-    restart: always
-    expose:
-      - "5432"
-    env_file:
-      - .env.local
+      - rated_influxdb2
+
+  rated_influxdb2:
+    image: influxdb:2
+    ports:
+      - 8086:8086
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME_FILE: /run/secrets/influxdb2-admin-username
+      DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
+      DOCKER_INFLUXDB_INIT_ORG: rated
+      DOCKER_INFLUXDB_INIT_BUCKET: rated_http_logs
+    secrets:
+      - influxdb2-admin-username
+      - influxdb2-admin-password
+      - influxdb2-admin-token
     volumes:
-      - ./postgres:/var/lib/postgresql/data # persists the data locally after image removal
+      - type: volume
+        source: influxdb2-data
+        target: /var/lib/influxdb2
+      - type: volume
+        source: influxdb2-config
+        target: /etc/influxdb2
+
+secrets:
+  influxdb2-admin-username:
+    file: secrets/.env.influxdb2-admin-username
+  influxdb2-admin-password:
+    file: secrets/.env.influxdb2-admin-password
+  influxdb2-admin-token:
+    file: secrets/.env.influxdb2-admin-token
+volumes:
+  influxdb2-data:
+  influxdb2-config:

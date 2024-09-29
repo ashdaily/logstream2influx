@@ -46,4 +46,11 @@ Good luck!
 - revisit docker-compose
 - retest one command setup
 - should be 12 factor app compliant
-- 
+
+# Thoughts : 
+- Since Bytewax and Streaming is mentioned, the data will probably come in streams and not in batches
+- For batch inserts postgres should be fine but this project is probably demanding stream ingestion.
+- For streams (data as it is available) inserts / ingestion rate postgres will do poorly at high ingestion rates like 1 mil rows per second 
+  without optimization because of increased disk space and cause slow queries, a good fit here could be a time series db store because logs have timestamps. 
+- The request for the api will have customer_id and date for which we need to return stats, the calculation of p99, median and avg latency are also required.
+- Looks like a influx db satisfy the log processing requirement and also the log search requirement too because it has inherent support for p99, median, avg calculations. 
