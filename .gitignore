@@ -2,6 +2,11 @@
 venv/
 .idea/
 
+# log files
+src/log_generator/api_requests.log
+src/log_generator/log_generator.log
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
