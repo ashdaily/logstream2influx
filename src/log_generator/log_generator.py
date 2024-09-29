@@ -4,71 +4,77 @@ import datetime
 import time
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s: %(message)s',
-    handlers=[
-        logging.FileHandler('log_generator.log'),
-        logging.StreamHandler()
-    ]
-)
 
-# These env variable are used to continuously append logs so bytewax stream can continue streaming logs to influx db.
-log_batch_size = int(os.getenv("LOG_BATCH_SIZE", 100))
-log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS", 10))
-log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
-max_logs = 100_000_000  # We consciously want to stop the simulation after 100 million logs.
+class LogGenerator:
+    def __init__(self):
+        # Load environment variables and parameters
+        self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE", 100))
+        self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS", 10))
+        self.log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
+        self.max_logs = 100_000_000  # Stop after 100 million logs
 
-random.seed(42)  # Set seed before generating durations
+        # Log Data initialization
+        random.seed(42)  # Set seed for reproducibility
+        self.customer_ids = [f"cust_{i}" for i in range(1, 51)]
+        self.request_paths = ["/api/v1/resource1", "/api/v1/resource2", "/api/v1/resource3", "/api/v1/resource4"]
+        self.status_codes = [200, 201, 400, 401, 403, 404, 500]
+        self.durations = [random.uniform(0.1, 2.0) for _ in range(self.max_logs)]
 
-# Parameters
-customer_ids = [f"cust_{i}" for i in range(1, 51)]
-request_paths = ["/api/v1/resource1", "/api/v1/resource2", "/api/v1/resource3", "/api/v1/resource4"]
-status_codes = [200, 201, 400, 401, 403, 404, 500]
-durations = [random.uniform(0.1, 2.0) for _ in range(max_logs)]
+        # Logging
+        self.configure_logging()
 
+    @staticmethod
+    def configure_logging():
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            handlers=[
+                logging.FileHandler('log_generator.log'),
+                logging.StreamHandler()
+            ]
+        )
 
-# Function to generate random timestamp
-def generate_timestamp():
-    start_date = datetime.datetime.now() - datetime.timedelta(days=30)
-    random_seconds = random.randint(0, 30*24*60*60)
-    return start_date + datetime.timedelta(seconds=random_seconds)
+    def generate_timestamp(self):
+        """Generates a random timestamp within the past 30 days."""
+        start_date = datetime.datetime.now() - datetime.timedelta(days=30)
+        random_seconds = random.randint(0, 30 * 24 * 60 * 60)
+        return start_date + datetime.timedelta(seconds=random_seconds)
 
+    def generate_log_entry(self):
+        """Generates a single log entry."""
+        timestamp = self.generate_timestamp().strftime("%Y-%m-%d %H:%M:%S")
+        customer_id = random.choice(self.customer_ids)
+        request_path = random.choice(self.request_paths)
+        status_code = random.choice(self.status_codes)
+        duration = f"{random.choice(self.durations):.3f}"
+        return f"{timestamp} {customer_id} {request_path} {status_code} {duration}\n"
 
-def generate_logs():
-    """
-    This function simulates a real life production server that keeps ingesting logs to a .log file.
+    def ingest_logs(self):
+        """
+        This function simulates a real life scenario where logs keep growing in a .log file.
+        It generates logs in batches based on LOG_BATCH_SIZE per LOG_INTERVAL_SECONDS and append file at LOG_FILE_PATH.
+        For example: LOG_BATCH_SIZE=100 & LOG_INTERVAL_SECONDS=10 will append 100 logs to the log file located at
+        LOG_FILE_PATH every 10 seconds. These values can be passed as env vars to simulate expected log load.
+        """
+        total_logs_written = 0
 
-    It generates logs in batches based on log_batch_size per log_interval_seconds and append file at log_file_path.
+        logging.info(f"Starting log generation with batch size {self.log_batch_size} and interval {self.log_interval_seconds}s")
 
-    For example: log_batch_size=100 & log_interval_seconds=10 will append 100 logs to the log file located at
-    log_file_path every 10 seconds. These values can be passed as env vars to simulate expected log load.
+        while total_logs_written < self.max_logs:
+            with open(self.log_file_path, "a") as log_file:
+                for _ in range(self.log_batch_size):
+                    if total_logs_written >= self.max_logs:
+                        logging.info(f"Reached max log limit of {self.max_logs}. Stopping log generation.")
+                        return
+                    log_file.write(self.generate_log_entry())
+                    total_logs_written += 1
 
-    :return: None
-    """
-    total_logs_written = 0
+            logging.info(f"Generated {self.log_batch_size} logs. Total logs written: {total_logs_written}")
+            time.sleep(self.log_interval_seconds)
 
-    logging.info(f"Starting log generation with batch size {log_batch_size} and interval {log_interval_seconds}s")
-
-    while total_logs_written < max_logs:
-        with open(log_file_path, "a") as log_file:
-            for _ in range(log_batch_size):
-                if total_logs_written >= max_logs:
-                    logging.info(f"Reached max log limit of {max_logs}. Stopping log generation.")
-                    return
-                timestamp = generate_timestamp().strftime("%Y-%m-%d %H:%M:%S")
-                customer_id = random.choice(customer_ids)
-                request_path = random.choice(request_paths)
-                status_code = random.choice(status_codes)
-                duration = f"{random.choice(durations):.3f}"
-                log_file.write(f"{timestamp} {customer_id} {request_path} {status_code} {duration}\n")
-                total_logs_written += 1
-
-        logging.info(f"Generated {log_batch_size} logs. Total logs written: {total_logs_written}")
-        time.sleep(log_interval_seconds)
-
-    logging.info("Log generation completed.")
+        logging.info("Log generation completed.")
 
 
 if __name__ == '__main__':
-    generate_logs()
+    log_generator = LogGenerator()
+    log_generator.ingest_logs()
