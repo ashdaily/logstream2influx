@@ -1,13 +1,13 @@
 services:
   rated_api:
     restart: unless-stopped
-    build: .
+    build:
+      context: ./  # we need the context to be wide because shared python packages like config that are required in service.
+      dockerfile: src/app/Dockerfile
     ports:
       - "8000:80"
     volumes:
       - .:/src/app
-    environment:
-      - ENV=development
     develop:
       watch:
         - action: sync
@@ -15,6 +15,18 @@ services:
           target: /src
     depends_on:
       - rated_influxdb2
+
+  log_generator:
+    build:
+      context: ./  # we need the context to be wide because shared python packages like config that are required in service.
+      dockerfile: src/log_generator/Dockerfile
+    environment:
+      LOG_BATCH_SIZE: ${LOG_BATCH_SIZE}
+      LOG_INTERVAL_SECONDS: ${LOG_INTERVAL_SECONDS}
+      LOG_FILE_PATH: ${LOG_FILE_PATH}
+    volumes:
+      - "./log_generator/logs:/log_generator"  # We need to mount this volume so that logs are stored outside of container and log processor can use it.
+    restart: unless-stopped
 
   rated_influxdb2:
     image: influxdb:2
