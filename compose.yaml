@@ -1,6 +1,6 @@
 services:
   rated_api:
-    restart: always
+    restart: unless-stopped
     build: .
     ports:
       - "8000:80"
@@ -21,16 +21,16 @@ services:
     ports:
       - 8086:8086
     environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME_FILE: /run/secrets/influxdb2-admin-username
-      DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
-      DOCKER_INFLUXDB_INIT_ORG: rated
-      DOCKER_INFLUXDB_INIT_BUCKET: rated_http_logs
-    secrets:
-      - influxdb2-admin-username
-      - influxdb2-admin-password
-      - influxdb2-admin-token
+      - DOCKER_INFLUXDB_INIT_MODE=${DOCKER_INFLUXDB_INIT_MODE}
+      - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${DOCKER_INFLUXDB_INIT_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${DOCKER_INFLUXDB_INIT_RETENTION}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+      - DOCKER_INFLUXDB_INIT_ADMIN_USER=${DOCKER_INFLUXDB_INIT_ADMIN_USER}
+      - DOCKER_INFLUXDB_INIT_ADMIN_PASSWORD=${DOCKER_INFLUXDB_INIT_ADMIN_PASSWORD}
+      - INFLUXDB_HTTP_AUTH_ENABLED=${INFLUXDB_HTTP_AUTH_ENABLED}
     volumes:
       - type: volume
         source: influxdb2-data
@@ -38,14 +38,8 @@ services:
       - type: volume
         source: influxdb2-config
         target: /etc/influxdb2
+    restart: unless-stopped
 
-secrets:
-  influxdb2-admin-username:
-    file: secrets/.env.influxdb2-admin-username
-  influxdb2-admin-password:
-    file: secrets/.env.influxdb2-admin-password
-  influxdb2-admin-token:
-    file: secrets/.env.influxdb2-admin-token
 volumes:
   influxdb2-data:
   influxdb2-config:
