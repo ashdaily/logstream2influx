@@ -1,7 +1,6 @@
 venv/
 readme.md
 test_main.http
-postgres
 .idea/
 __pycache__/
 *.py[cod]
