@@ -3,7 +3,6 @@ import bytewax.operators as op
 from bytewax.dataflow import Dataflow
 from bytewax.connectors.stdio import StdOutSink
 from polling_source import LogPollingSource
-from storage import InfluxDBStorage
 from log_handler import LogProcessor
 
 
@@ -24,7 +23,7 @@ def create_dataflow(log_file_path, influx_storage):
     processed_stream = op.map("process_log", extracted_log_stream, log_processor.handle_log)
     logging.info("Log processing step added to dataflow.")
 
-    # Output to StdOut (for debugging)
+    # Output to StdOut (for debugging) TODO: maybe remove later
     op.output("stdout_output", processed_stream, StdOutSink())
     logging.info("Output step added to dataflow.")
 

@@ -41,7 +41,7 @@ class LogProcessor(LogHandler):
                 duration = float(parts[5])
 
                 return {
-                    "timestamp": timestamp.isoformat(),
+                    "timestamp": timestamp.isoformat() + "Z",
                     "customer_id": customer_id,
                     "request_path": request_path,
                     "status_code": status_code,
