@@ -6,6 +6,8 @@ venv/
 src/log_generator/api_requests.log
 src/log_generator/log_generator.log
 
+# influx volume mount
+influx-volume/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
