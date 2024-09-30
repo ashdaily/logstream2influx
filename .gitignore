@@ -5,6 +5,7 @@ venv/
 # log files
 src/log_generator/api_requests.log
 src/log_generator/log_generator.log
+src/log_processor/log_processor.log
 
 # influx volume mount
 influx-volume/
