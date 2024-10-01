@@ -40,12 +40,17 @@ class LogProcessor(LogHandler):
                 status_code = int(parts[4])
                 duration = float(parts[5])
 
+                # Determine if the request was successful (status_code 2xx or 3xx)
+                success = 1 if 200 <= status_code < 400 else 0
+                logging.info(f"Log processed: status_code={status_code}, success={success}")
+
                 return {
                     "timestamp": timestamp.isoformat() + "Z",
                     "customer_id": customer_id,
                     "request_path": request_path,
                     "status_code": status_code,
-                    "duration": duration
+                    "duration": duration,
+                    "success": success
                 }
             else:
                 logging.warning(f"Invalid log line: {log_line}")
