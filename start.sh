@@ -10,9 +10,8 @@ else
     echo "$LOG_FILE has been created."
 fi
 
-# Build and run the services using Docker Compose
 echo "Building Docker Compose services..."
-docker compose --env-file src/config/.env.local build --no-cache
+docker compose --env-file .env.local build --no-cache
 
 echo "Starting Docker Compose services..."
-docker compose --env-file src/config/.env.local up
+docker compose --env-file .env.local up

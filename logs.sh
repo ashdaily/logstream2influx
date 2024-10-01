@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker compose --env-file src/config/.env.local up
+docker compose --env-file .env.local up

@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# Path to the log files
 LOG_FILE="./src/log_generator/api_requests.log"
 PROCESSOR_LOG="./src/log_processor/log_processor.log"
 GENERATOR_LOG="./src/log_generator/log_generator.log"
-
-# Path to InfluxDB volume folder
 INFLUX_VOLUME="./influx-volume"
 
 # Step 1: Empty the api_requests.log file
@@ -19,7 +16,7 @@ fi
 
 # Step 2: Stop and remove all containers, networks, volumes using Docker Compose
 echo "Stopping and removing all containers, networks, and volumes..."
-docker compose --env-file src/config/.env.local down -v
+docker compose --env-file .env.local down -v
 
 # Step 3: Remove influx-volume folder and its contents
 if [ -d "$INFLUX_VOLUME" ]; then
