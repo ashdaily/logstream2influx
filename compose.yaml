@@ -3,25 +3,28 @@ networks:
     driver: bridge
 
 services:
-#  rated_api:
-#    restart: unless-stopped
-#    build:
-#      context: ./
-#      dockerfile: src/app/Dockerfile
-#    ports:
-#      - "8000:80"
-#    volumes:
-#      - .:/src/app
-#    networks:
-#      - rated_network
-#    develop:
-#      watch:
-#        - action: sync
-#          path: /src
-#          target: /src
-#    depends_on:
-#      - rated_influxdb2
+  rated_api:
+      container_name: rated_api
+      build:
+        context: ./src/app
+        dockerfile: Dockerfile
+      ports:
+        - "8000:8000"
+      depends_on:
+        - rated_db
+      volumes:
+        - ./src/app:/app
+      environment:
+        - INFLUXDB_URL=${INFLUXDB_URL}
+        - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+        - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
+        - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG}
+      networks:
+        - rated_network
+      restart: unless-stopped
+
   log_processor:
+    container_name: log_processor
     build:
       context: ./
       dockerfile: src/log_processor/Dockerfile
@@ -34,7 +37,7 @@ services:
       - LOG_INTERVAL_SECONDS=${LOG_INTERVAL_SECONDS}
       - LOG_FILE_PATH=${LOG_FILE_PATH}
     depends_on:
-      - rated_influxdb2
+      - rated_db
     volumes:
       - ./src/log_processor/:/log_processor/
       - ./src/log_generator/${LOG_FILE_PATH}:/log_generator/${LOG_FILE_PATH}
@@ -43,6 +46,7 @@ services:
     restart: unless-stopped
 
   log_generator:
+    container_name: log_generator
     build:
       context: ./
       dockerfile: src/log_generator/Dockerfile
@@ -56,7 +60,8 @@ services:
       - rated_network
     restart: unless-stopped
 
-  rated_influxdb2:
+  rated_db:
+    container_name: rated_db
     image: influxdb:2
     ports:
       - 8086:8086
@@ -82,7 +87,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 
 volumes:
   influxdb2-data:
