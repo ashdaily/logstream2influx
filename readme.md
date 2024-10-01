@@ -1,4 +1,4 @@
-### System Design :
+### Logs -> Bytewax -> InfluxDB :
 
 ```mermaid
 sequenceDiagram
@@ -36,11 +36,11 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 
 
 ### Log Generator
-- Log Generator (`src/log_generator`) : Responsible for ingesting logs in `api_requests.log` at a rate. This rate is basically LOG_BATCH_SIZE per LOG_INTERVAL_SECONDS. 
-- For example : LOG_BATCH_SIZE=1 and LOG_INTERVAL_SECONDS=60 means Log Generator will ingest one log line per 60 seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible. 
+- Log Generator (`src/log_generator`) : Responsible for ingesting logs in `api_requests.log` at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS`. 
+- For example : `LOG_BATCH_SIZE=1` and `LOG_INTERVAL_SECONDS=60` means Log Generator will ingest one log line per `60` seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible. 
 
 ### Log Processor
-- Log Processor uses ByteWax.SimplePollingSource to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to ByteWax.DataFlow which hands it over to Log Handler which does some simple string to dict transformation and dumps it in the InfluxDB
+- LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to `ByteWax.DataFlow` which hands it over to Log Handler which does some simple string to dict transformation and dumps it in the InfluxDB
 - LogProcessor has some unit tests and some integration test that test against the InfluxDB docker instance.
 
 ```bash
@@ -59,7 +59,7 @@ docker run --rm -it log_processor python -m unittest
 
 ### Stuff in todo
 - Rest Api integration
-- Query refinement
+- Query fixing to cover all days from start date
 - Add tests for Api
 - Validate sanity with integration tests
 - Consider optimizing query
