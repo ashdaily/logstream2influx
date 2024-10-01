@@ -6,7 +6,7 @@ services:
   rated_api:
       container_name: rated_api
       build:
-        context: ./src/api
+        context: ./
         dockerfile: Dockerfile
       ports:
         - "8000:8000"

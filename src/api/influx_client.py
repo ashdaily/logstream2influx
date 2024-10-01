@@ -1,6 +1,6 @@
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 from config import INFLUXDB_TOKEN, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_URL
 from influxdb_client import InfluxDBClient
@@ -12,9 +12,17 @@ class InfluxClient:
         self.org: str = INFLUXDB_ORG
         self.url: str = INFLUXDB_URL
         self.token: str = INFLUXDB_TOKEN
-        self._client: InfluxDBClient = InfluxDBClient(url=self.url, token=self.token, org=self.org)
+        self._client: Optional[InfluxDBClient] = None
+
+    def __enter__(self):
+        self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
         self.reader_client = self._client.query_api()
         self.writer_client = self._client.write_api(write_options=SYNCHRONOUS)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._client:
+            self._client.close()
 
     @staticmethod
     def get_start_end_times(_date: str) -> Tuple[str, str]:
@@ -22,10 +30,10 @@ class InfluxClient:
         end_time: datetime = start_time + timedelta(days=1) - timedelta(seconds=1)
         return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
 
-    def get_stats(self, _customer_id: str, _date: str) -> Dict[str, float]|None:
+    def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
 
-        # Fetch successful requests (2xx status codes)
+        # Fetch successful requests (2xx/3xx status codes)
         success_query = f'''
         from(bucket: "{self.bucket}")
           |> range(start: {start_time}, stop: {end_time})
@@ -69,17 +77,15 @@ class InfluxClient:
         else:
             mean_latency = median_latency = p99_latency = None
 
-        # Uptime calculation
         total_requests = total_success + total_failed
         uptime = (total_success / total_requests) * 100 if total_requests > 0 else 0
 
-        self._client.close()
-
         return {
-            "total_success": total_success,
-            "total_failed": total_failed,
-            "mean_latency": mean_latency,
-            "median_latency": median_latency,
-            "p99_latency": p99_latency,
-            "uptime": round(uptime, 5)
+            "total_requests": total_requests or 0,
+            "successful_requests": total_success or 0,
+            "failed_requests": total_failed or 0,
+            "uptime": round(uptime, 5),
+            "average_latency": mean_latency if mean_latency else None,
+            "median_latency": median_latency if median_latency else None,
+            "p99_latency": p99_latency if p99_latency else None
         }
