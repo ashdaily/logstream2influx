@@ -6,14 +6,14 @@ services:
   rated_api:
       container_name: rated_api
       build:
-        context: ./src/app
+        context: ./src/api
         dockerfile: Dockerfile
       ports:
         - "8000:8000"
       depends_on:
         - rated_db
       volumes:
-        - ./src/app:/app
+        - ./src/api:/api
       environment:
         - INFLUXDB_URL=${INFLUXDB_URL}
         - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
