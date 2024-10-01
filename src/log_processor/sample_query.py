@@ -7,10 +7,12 @@ INFLUX_TOKEN = "MyInitialAdminToken0=="
 INFLUX_ORG = "rated_org"
 INFLUX_BUCKET = "rated_http_logs_bucket"
 
+
 def get_start_end_times(date_str):
     start_time = datetime.strptime(date_str, "%Y-%m-%d")
     end_time = start_time + timedelta(days=1) - timedelta(seconds=1)
     return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
+
 
 def query_all_stats(customer_id, date):
     client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)

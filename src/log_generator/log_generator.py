@@ -8,8 +8,8 @@ import logging
 class LogGenerator:
     def __init__(self):
         # Load environment variables and parameters
-        self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE", 100))
-        self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS", 10))
+        self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE"))
+        self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS"))
         self.log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
         self.max_logs = 100_000_000  # Stop after 100 million logs
 
