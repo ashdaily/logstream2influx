@@ -46,10 +46,11 @@ class InfluxDBStorage(LogStorage):
             self.query_log_data(log_data)
 
     def query_log_data(self, log_data):
+        # NOTE: should not be used in prod
         try:
             log_time = datetime.fromisoformat(log_data['timestamp'].replace("Z", ""))
 
-            # 5-second buffer around the log timestamp should help spotting what we added
+            # 5-second buffer around the log timestamp should help spot what we added
             start_time = (log_time - timedelta(seconds=5)).isoformat() + "Z"
             stop_time = (log_time + timedelta(seconds=5)).isoformat() + "Z"
 
@@ -65,8 +66,14 @@ class InfluxDBStorage(LogStorage):
               |> filter(fn: (r) => r["_field"] == "duration" and r["_value"] == {log_data['duration']})
             '''
             result = self.query_api.query(org=INFLUXDB_ORG, query=query)
+
             if result:
-                logging.info(f"Query successful. Exact log data: {result}")
+                logging.info("Query successful. Log data stored in InfluxDB:")
+
+                for table in result:
+                    for record in table.records:
+                        logging.info(f"Record: {record.values}")
+
             else:
                 logging.warning("No exact match found for the added log data.")
         except Exception as e:
