@@ -3,7 +3,7 @@ from datetime import datetime
 from log_handler import LogProcessor
 from storage import InfluxDBStorage
 from influxdb_client import InfluxDBClient
-from customer_stats import query_all_stats, get_start_end_times
+from sample_query import query_all_stats, get_start_end_times
 
 INFLUXDB_URL = "http://rated_db:8086"
 INFLUXDB_TOKEN = "MyInitialAdminToken0=="
@@ -35,16 +35,13 @@ class TestCustomerStatsIntegration(unittest.TestCase):
 
         # process all logs, eventually they get saved in influxdb
         for log in self.logs_cust_1:
-            print(f"Processing log for cust_1: {log}")
             self.processor.handle_log(log)
 
         for log in self.logs_cust_2:
-            print(f"Processing log for cust_2: {log}")
             self.processor.handle_log(log)
 
     def test_stats_for_cust_1(self):
         stats = query_all_stats("cust_1", "2024-09-29")
-        print(f"Stats for cust_1: {stats}")
 
         self.assertEqual(stats["total_success"], 3)
         self.assertEqual(stats["total_failed"], 2)
