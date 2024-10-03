@@ -13,7 +13,7 @@ services:
       depends_on:
         - rated_db
       volumes:
-        - ./src/api:/api
+        - ./src/api:/app
       environment:
         - INFLUXDB_URL=${INFLUXDB_URL}
         - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
