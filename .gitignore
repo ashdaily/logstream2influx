@@ -3,6 +3,7 @@ env/
 .idea/
 
 # log files
+src/api/customer_stats.log
 src/log_generator/api_requests.log
 src/log_generator/log_generator.log
 src/log_processor/log_processor.log
