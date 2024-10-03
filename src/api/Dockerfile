@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /api
 
-COPY src/api/requirements.txt /app/
+COPY src/api/requirements.txt /api/
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /api/

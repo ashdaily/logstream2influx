@@ -35,19 +35,19 @@ jobs:
           command: ./testmode.sh
       - run:
           name: Spin Up Influx DB
-          command: docker compose --env-file .env.local up -d rated_db
+          command: docker compose -f compose.ci.yaml --env-file .env.local up -d rated_db
       - run:
           name: Build Log Processor
-          command: docker compose --env-file .env.local build log_processor --no-cache
+          command: docker compose -f compose.ci.yaml --env-file .env.local build log_processor --no-cache
       - run:
           name: Build Api
-          command: docker compose --env-file .env.local build rated_api --no-cache
+          command: docker compose -f compose.ci.yaml --env-file .env.local build rated_api --no-cache
       - run:
           name: Run Api
-          command: docker compose --env-file .env.local up -d rated_api
+          command: docker compose -f compose.ci.yaml --env-file .env.local up -d rated_api
       - run:
           name: Run Log Processor
-          command: docker compose --env-file .env.local up -d log_processor
+          command: docker compose -f compose.ci.yaml --env-file .env.local up -d log_processor
       - run:
           name: Run Api Tests
           command: docker exec -it rated_api python -m unittest
