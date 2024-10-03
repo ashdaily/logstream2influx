@@ -26,11 +26,6 @@ jobs:
       - setup_remote_docker
 
       - run:
-          name: Install Docker Compose
-          command: |
-            curl -L "https://github.com/docker/compose/releases/download/2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
-      - run:
           name: Make run_tests.sh Executable
           command: chmod +x ./run_tests.sh
 
