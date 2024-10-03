@@ -16,7 +16,7 @@ fi
 
 # Step 2: Stop and remove all containers, networks, volumes using Docker Compose
 echo "Stopping and removing all containers, networks, and volumes..."
-docker compose --env-file .env.local down -v
+docker compose --env-file .env.local rm -fsv
 
 # Step 3: Remove influx-volume folder and its contents
 if [ -d "$INFLUX_VOLUME" ]; then
