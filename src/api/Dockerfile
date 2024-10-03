@@ -5,10 +5,8 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /api
 
-COPY src/api/requirements.txt /api/
+COPY src/api/ /api/
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY src/api /api/
 
 EXPOSE 8000
 

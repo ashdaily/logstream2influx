@@ -4,10 +4,10 @@ echo "Preparing containers for testing ...."
 ./testmode.sh
 
 echo "Building Docker services..."
-docker compose --env-file .env.local build log_processor rated_db rated_api --no-cache
+docker compose -f compose.yaml --env-file .env.local build log_processor rated_db rated_api --no-cache
 
 echo "Starting Docker services..."
-docker compose --env-file .env.local up -d log_processor rated_db rated_api
+docker compose -f compose.yaml --env-file .env.local up -d log_processor rated_db rated_api
 
 check_container_health() {
   container_name=$1
@@ -40,7 +40,7 @@ check_container_health "log_processor"
 trap './cleanup.sh' EXIT
 
 echo "Starting tests in the 'log_processor' container..."
-docker exec -it log_processor python -m unittest
+docker compose -f compose.yaml --env-file .env.local run log_processor python -m unittest
 
 echo "Starting tests in the 'rate_api' container..."
-docker exec -it rated_api python -m unittest
+docker compose -f compose.yaml --env-file .env.local run rated_api python -m unittest

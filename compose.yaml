@@ -5,6 +5,7 @@ networks:
 services:
   rated_api:
       container_name: rated_api
+      image: rated_api
       build:
         context: ./
         dockerfile: ./src/api/Dockerfile
@@ -13,7 +14,7 @@ services:
       depends_on:
         - rated_db
       volumes:
-        - ./src/api:/app
+        - ./src/api:/api
       environment:
         - INFLUXDB_URL=${INFLUXDB_URL}
         - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
@@ -24,6 +25,7 @@ services:
       restart: unless-stopped
 
   log_processor:
+    image: log_processor
     container_name: log_processor
     build:
       context: ./
@@ -46,6 +48,7 @@ services:
     restart: unless-stopped
 
   log_generator:
+    image: log_generator
     container_name: log_generator
     build:
       context: ./

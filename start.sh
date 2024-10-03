@@ -13,7 +13,7 @@ else
 fi
 
 echo "Building Docker Compose services..."
-docker compose --env-file .env.local build --no-cache
+docker compose -f compose.yaml --env-file .env.local build --no-cache
 
 echo "Starting Docker Compose services..."
-docker compose --env-file .env.local up
+docker compose -f compose.yaml --env-file .env.local up

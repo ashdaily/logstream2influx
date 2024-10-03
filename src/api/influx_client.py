@@ -27,7 +27,7 @@ class InfluxClient:
     @staticmethod
     def get_start_end_times(_date: str) -> Tuple[str, str]:
         start_time: datetime = datetime.strptime(_date, "%Y-%m-%d")
-        end_time: datetime = start_time + timedelta(days=1) - timedelta(seconds=1)
+        end_time: datetime = datetime.utcnow()  # Today's date as the end time
         return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
 
     def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
