@@ -7,7 +7,7 @@ executors:
     working_directory: ~/repo
 
 jobs:
-  test:
+  run_tests:
     executor: docker-executor
     steps:
       - checkout
