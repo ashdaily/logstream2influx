@@ -24,7 +24,12 @@ jobs:
             mv ~/docker-compose ~/.docker/cli-plugins/docker-compose
 
       - setup_remote_docker
-
+      - run:
+          name: Make run_tests.sh Executable
+          command: chmod +x ./cleanup.sh
+      - run:
+          name: Make testmode.sh Executable
+          command: chmod +x ./testmode.sh
       - run:
           name: Make run_tests.sh Executable
           command: chmod +x ./run_tests.sh
