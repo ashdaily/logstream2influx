@@ -1,14 +1,16 @@
 version: 2.1
+orbs:
+  python: circleci/python@2.1.1
 
 executors:
   docker-executor:
     docker:
-      - image: circleci/python:3.12
+      - image: circleci/
     working_directory: ~/repo
 
 jobs:
   run_tests:
-    executor: docker-executor
+    executor: python/default
     steps:
       - checkout
       - setup_remote_docker
