@@ -12,7 +12,7 @@ class CustomerStatsResponse(BaseModel):
     p99_latency: Optional[float] = Field(None, description="99th percentile latency in seconds")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "total_requests": 100,
                 "successful_requests": 90,
