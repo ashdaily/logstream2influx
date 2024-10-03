@@ -30,5 +30,11 @@ check_container_health() {
 check_container_health "rated_db"
 check_container_health "log_processor"
 
+# cleanup will run after the script ends, even on error
+trap './cleanup.sh' EXIT
+
 echo "Starting tests in the 'log_processor' container..."
 docker exec -it log_processor python -m unittest
+
+echo "Starting tests in the 'rate_api' container..."
+docker exec -it rated_api python -m unittest
