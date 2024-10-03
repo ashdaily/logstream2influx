@@ -28,8 +28,32 @@ jobs:
           name: CI permissions
           command: chmod -R +x .
       - run:
-          name: Run Tests using run_tests.sh
-          command: ./run_tests.sh
+          name: Clean up
+          command: ./cleanup.sh
+      - run:
+          name: Test mode
+          command: ./testmode.sh
+      - run:
+          name: Spin Up Influx DB
+          command: docker compose --env-file .env.local up -d rated_db
+      - run:
+          name: Build Log Processor
+          command: docker compose --env-file .env.local build log_processor --no-cache
+      - run:
+          name: Build Api
+          command: docker compose --env-file .env.local build rated_api --no-cache
+      - run:
+          name: Run Api
+          command: docker compose --env-file .env.local up -d rated_api
+      - run:
+          name: Run Log Processor
+          command: docker compose --env-file .env.local up -d log_processor
+      - run:
+          name: Run Api Tests
+          command: docker exec -it rated_api python -m unittest
+      - run:
+          name: Run Log Processor Tests
+          command: docker exec -it log_processor python -m unittest
 
 workflows:
   version: 2
