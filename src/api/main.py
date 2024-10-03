@@ -5,9 +5,11 @@ app = FastAPI(title="Customer Log Stats API", version="1.0.0")
 
 app.include_router(customers_router)
 
+
 @app.get("/")
 def read_root():
     return {"message": "API is up and running"}
+
 
 if __name__ == "__main__":
     import uvicorn
