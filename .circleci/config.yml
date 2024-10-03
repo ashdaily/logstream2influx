@@ -23,7 +23,7 @@ jobs:
           command: chmod +x ./run_tests.sh
 
       - run:
-          name: Run Tests via run_tests.sh
+          name: Run Tests using run_tests.sh
           command: ./run_tests.sh
 
 workflows:
