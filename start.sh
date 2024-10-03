@@ -1,5 +1,7 @@
 #!/bin/bash
 # Check if the log file exists
+./cleanup.sh
+
 LOG_FILE="./src/log_generator/api_requests.log"
 
 if [ -f "$LOG_FILE" ]; then
