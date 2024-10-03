@@ -11,8 +11,8 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 27.2.0
+      - setup_remote_docker
+
       - run:
           name: Install Docker Compose
           command: |
