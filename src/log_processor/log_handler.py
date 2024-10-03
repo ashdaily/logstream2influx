@@ -3,15 +3,17 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 
-class LogHandler(ABC):
+class LogHandlerBase(ABC):
     @abstractmethod
     def handle_log(self, log_line: str):
         pass
 
 
-class LogProcessor(LogHandler):
+class LogHandler(LogHandlerBase):
     """
-    Processes raw log lines and converts them to structured data.
+    Processes raw log lines and converts them to structured data, then saves it using InfluxDbStorage which
+    is injected as dependency in this class.
+    .
     """
 
     def __init__(self, storage):

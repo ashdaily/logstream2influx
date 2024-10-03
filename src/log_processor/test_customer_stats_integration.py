@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from log_handler import LogProcessor
+from log_handler import LogHandler
 from storage import InfluxDBStorage
 from influxdb_client import InfluxDBClient
 from sample_query import query_all_stats, get_start_end_times
@@ -16,7 +16,7 @@ class TestCustomerStatsIntegration(unittest.TestCase):
         self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         self.storage = InfluxDBStorage(self.influx_client)
 
-        self.processor = LogProcessor(self.storage)
+        self.processor = LogHandler(self.storage)
 
         self.logs_cust_1 = [
             "2024-09-29 01:00:00 cust_1 /api/v1/resource 200 0.5",

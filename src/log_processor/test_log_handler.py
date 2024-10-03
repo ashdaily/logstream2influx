@@ -1,5 +1,5 @@
 import unittest
-from log_handler import LogProcessor
+from log_handler import LogHandler
 
 class MockStorage:
     def __init__(self):
@@ -11,7 +11,7 @@ class MockStorage:
 class TestLogProcessor(unittest.TestCase):
     def setUp(self):
         self.mock_storage = MockStorage()
-        self.processor = LogProcessor(self.mock_storage)
+        self.processor = LogHandler(self.mock_storage)
 
     def test_handle_valid_log(self):
         log_line = "2024-09-14 16:15:35 cust_5 /api/v1/resource4 200 0.772"

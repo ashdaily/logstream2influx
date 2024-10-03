@@ -3,7 +3,7 @@ import bytewax.operators as op
 from bytewax.dataflow import Dataflow
 from bytewax.connectors.stdio import StdOutSink
 from polling_source import LogPollingSource
-from log_handler import LogProcessor
+from log_handler import LogHandler
 
 
 def create_dataflow(log_file_path, influx_storage):
@@ -19,7 +19,7 @@ def create_dataflow(log_file_path, influx_storage):
     logging.info("Log extraction step added to dataflow.")
 
     # Process each log entry using the LogProcessor
-    log_processor = LogProcessor(influx_storage)
+    log_processor = LogHandler(influx_storage)
     processed_stream = op.map("process_log", extracted_log_stream, log_processor.handle_log)
     logging.info("Log processing step added to dataflow.")
 

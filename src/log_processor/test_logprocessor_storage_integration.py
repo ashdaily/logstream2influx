@@ -4,7 +4,7 @@ import tempfile
 from datetime import datetime
 from influxdb_client import InfluxDBClient
 from storage import InfluxDBStorage
-from log_handler import LogProcessor
+from log_handler import LogHandler
 
 
 INFLUXDB_URL = "http://rated_db:8086"
@@ -24,7 +24,7 @@ class TestCustomerStatsIntegration(unittest.TestCase):
         self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         self.storage = InfluxDBStorage(self.influx_client)
 
-        self.processor = LogProcessor(self.storage)
+        self.processor = LogHandler(self.storage)
 
     def test_log_handler_and_storage(self):
         for log_line in self.test_log_data:
