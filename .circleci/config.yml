@@ -26,7 +26,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: CI permissions
-          command: chmod +x .
+          command: chmod -R +x .
       - run:
           name: Run Tests using run_tests.sh
           command: ./run_tests.sh
