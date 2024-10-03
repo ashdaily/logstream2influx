@@ -1,5 +1,5 @@
 # IDE, environment specific
-venv/
+env/
 .idea/
 
 # log files
