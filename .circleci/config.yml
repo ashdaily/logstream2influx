@@ -48,6 +48,9 @@ jobs:
       - run:
           name: Run Api Tests
           command: docker compose -f compose.ci.yaml --env-file .env.local run rated_api python -m unittest
+      - run:
+          name: Stop and remove containers # want to do this so when we run ci locally, it cleans up
+          command: docker compose -f compose.ci.yaml --env-file .env.local down -v
 
 workflows:
   version: 2
