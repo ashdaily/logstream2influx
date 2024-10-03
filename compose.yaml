@@ -7,7 +7,7 @@ services:
       container_name: rated_api
       build:
         context: ./
-        dockerfile: Dockerfile
+        dockerfile: ./src/api/Dockerfile
       ports:
         - "8000:8000"
       depends_on:
@@ -27,7 +27,7 @@ services:
     container_name: log_processor
     build:
       context: ./
-      dockerfile: src/log_processor/Dockerfile
+      dockerfile: ./src/log_processor/Dockerfile
     environment:
       - INFLUXDB_URL=${INFLUXDB_URL}
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
@@ -49,7 +49,7 @@ services:
     container_name: log_generator
     build:
       context: ./
-      dockerfile: src/log_generator/Dockerfile
+      dockerfile: ./src/log_generator/Dockerfile
     environment:
       LOG_BATCH_SIZE: ${LOG_BATCH_SIZE}
       LOG_INTERVAL_SECONDS: ${LOG_INTERVAL_SECONDS}
@@ -63,6 +63,8 @@ services:
   rated_db:
     container_name: rated_db
     image: influxdb:2
+    build:
+      context: ./
     ports:
       - 8086:8086
     environment:
