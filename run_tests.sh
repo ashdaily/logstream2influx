@@ -3,6 +3,12 @@
 echo "Preparing containers for testing ...."
 ./testmode.sh
 
+echo "Building Docker services..."
+docker compose --env-file .env.local build log_processor rated_db rated_api --no-cache
+
+echo "Starting Docker services..."
+docker compose --env-file .env.local up -d log_processor rated_db rated_api
+
 check_container_health() {
   container_name=$1
   while true; do

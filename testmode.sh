@@ -12,9 +12,3 @@ else
     touch "$LOG_FILE"
     echo "$LOG_FILE has been created."
 fi
-
-echo "Building Docker Compose services..."
-docker compose --env-file .env.local build --no-cache
-
-echo "Starting Docker Compose services..."
-docker compose --env-file .env.local up -d log_processor rated_db rated_api
