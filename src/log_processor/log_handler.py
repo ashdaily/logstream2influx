@@ -6,7 +6,7 @@ from typing import List
 
 class LogHandlerBase(ABC):
     @abstractmethod
-    def handle_log(self, log_line: str):
+    def handle_log(self, log_lines: List[str]):
         pass
 
 
