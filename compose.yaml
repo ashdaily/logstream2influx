@@ -61,7 +61,7 @@ services:
        - ./src/log_generator/:/log_generator/
     networks:
       - rated_network
-    restart: unless-stopped
+    restart: no
 
   rated_db:
     container_name: rated_db
