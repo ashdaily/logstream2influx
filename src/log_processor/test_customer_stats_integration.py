@@ -1,20 +1,13 @@
 import unittest
-from datetime import datetime
 from log_handler import LogHandler
 from storage import InfluxDBStorage
-from influxdb_client import InfluxDBClient
-from sample_query import query_all_stats, get_start_end_times
+from sample_query import query_all_stats
 
-INFLUXDB_URL = "http://rated_db:8086"
-INFLUXDB_TOKEN = "MyInitialAdminToken0=="
-INFLUXDB_ORG = "rated_org"
-INFLUXDB_BUCKET = "rated_http_logs_bucket"
 
 class TestCustomerStatsIntegration(unittest.TestCase):
 
     def setUp(self):
-        self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
-        self.storage = InfluxDBStorage(self.influx_client)
+        self.storage = InfluxDBStorage()
 
         self.processor = LogHandler(self.storage)
 

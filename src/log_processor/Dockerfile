@@ -1,12 +1,15 @@
 FROM python:3.12-slim
 
-WORKDIR /log_processor
+WORKDIR /app
 
-COPY src/log_processor/ /log_processor/
-
-COPY src/log_processor/requirements.txt /log_processor/
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 8086
+RUN pip install bytewax-cli # can remove later
 
-CMD ["python", "-m", "bytewax.run", "main"]
+COPY . /app/
+
+ARG WORKERS=4
+ENV WORKERS=${WORKERS}
+
+CMD ["python", "-m", "bytewax.run", "--workers", "$WORKERS", "main"]

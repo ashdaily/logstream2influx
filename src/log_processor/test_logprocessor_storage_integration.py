@@ -1,7 +1,4 @@
 import unittest
-import os
-import tempfile
-from datetime import datetime
 from influxdb_client import InfluxDBClient
 from storage import InfluxDBStorage
 from log_handler import LogHandler
@@ -22,7 +19,7 @@ class TestCustomerStatsIntegration(unittest.TestCase):
         ]
 
         self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
-        self.storage = InfluxDBStorage(self.influx_client)
+        self.storage = InfluxDBStorage()
 
         self.processor = LogHandler(self.storage)
 
@@ -37,7 +34,7 @@ class TestCustomerStatsIntegration(unittest.TestCase):
             |> filter(fn: (r) => r["customer_id"] == "cust_1")
         '''
 
-        result = self.storage.query_api.query(org=INFLUXDB_ORG, query=query)
+        result = self.influx_client.query_api().query(org=INFLUXDB_ORG, query=query)
 
         records = []
         for table in result:

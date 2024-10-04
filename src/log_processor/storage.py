@@ -1,87 +1,47 @@
 import logging
-from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
-from influxdb_client import InfluxDBClient
-from influxdb_client.client.write_api import SYNCHRONOUS
-from config import INFLUXDB_BUCKET, INFLUXDB_ORG
+
+from influxdb_client import InfluxDBClient, WriteOptions
+from config import (
+    INFLUXDB_BUCKET,
+    INFLUXDB_ORG,
+    INFLUXDB_URL,
+    INFLUXDB_TOKEN,
+    LOG_BATCH_SIZE,
+)
 
 
 class LogStorage(ABC):
     @abstractmethod
-    def store_log(self, log_data: dict):
+    def store_log(self, log_data):
         pass
 
 
 class InfluxDBStorage(LogStorage):
-    def __init__(self, influx_client: InfluxDBClient):
-        self.influx_client = influx_client
-        self.query_api = self.influx_client.query_api()
-        logging.info(f"InfluxDB storage initialized with bucket: {INFLUXDB_BUCKET} and org: {INFLUXDB_ORG}")
+    def __init__(self):
+        pass
 
-    def store_log(self, log_data: dict):
-        if not isinstance(log_data, dict):
-            logging.error(f"Invalid log data structure: {log_data}")
-            return
-
+    def store_log(self, log_data):
         try:
-            # Store status_code and request_path as tags for indexing and filtering
-            influx_payload = {
-                "measurement": "api_requests",
-                "tags": {
-                    "customer_id": log_data["customer_id"],
-                    "status_code": str(log_data["status_code"]),
-                    "request_path": log_data["request_path"],
-                    "success": str(log_data["success"])
-                },
-                "fields": {
-                    "duration": log_data["duration"]
-                },
-                "time": log_data["timestamp"]
-            }
-            write_api = self.influx_client.write_api(write_options=SYNCHRONOUS)
-            write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=influx_payload)
+            with InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG) as _client:
+
+                with _client.write_api(write_options=WriteOptions(batch_size=LOG_BATCH_SIZE*100,
+                                                                  flush_interval=10_000,
+                                                                  jitter_interval=2_000,
+                                                                  retry_interval=5_000,
+                                                                  max_retries=5,
+                                                                  max_retry_delay=30_000,
+                                                                  max_close_wait=300_000,
+                                                                  exponential_base=2)) as _write_client:
+                    _write_client.write(INFLUXDB_BUCKET, INFLUXDB_ORG, log_data)
 
         except Exception as e:
             logging.error(f"Error writing log to InfluxDB: {e}")
-        else:
-            self.query_log_data(log_data)
+        finally:
+            logging.info(f"Influx Db object count now: {InfluxDBStorage.count_total_logs()}")
 
-    def query_log_data(self, log_data: dict):
-        # FIXME: shouldn't run in prod, just for debugging purpose
-        try:
-            log_time = datetime.fromisoformat(log_data['timestamp'].replace("Z", ""))
-            start_time = (log_time - timedelta(seconds=5)).isoformat() + "Z"
-            stop_time = (log_time + timedelta(seconds=5)).isoformat() + "Z"
-
-            logging.info(f"Querying between start: {start_time} and stop: {stop_time}")
-
-            query = f'''
-            from(bucket: "{INFLUXDB_BUCKET}")
-              |> range(start: {start_time}, stop: {stop_time})
-              |> filter(fn: (r) => r["_measurement"] == "api_requests")
-              |> filter(fn: (r) => r["customer_id"] == "{log_data['customer_id']}")
-              |> filter(fn: (r) => r["request_path"] == "{log_data['request_path']}")
-              |> filter(fn: (r) => r["status_code"] == "{log_data['status_code']}")
-              |> filter(fn: (r) => r["_field"] == "duration" and r["_value"] == {log_data['duration']})
-              |> filter(fn: (r) => r["success"] == "{log_data['success']}")
-            '''
-            result = self.query_api.query(org=INFLUXDB_ORG, query=query)
-
-            if result:
-                logging.info("Query successful. Log data stored in InfluxDB:")
-                for table in result:
-                    for record in table.records:
-                        logging.info(f"Record: {record.values}")
-            else:
-                logging.warning("No exact match found for the added log data.")
-
-        except Exception as e:
-            logging.error(f"Error querying log data from InfluxDB: {e}")
-        else:
-            logging.info(f"Influx object count: {self.count_total_logs()}")
-
-    def count_total_logs(self) -> int:
-        """Count total logs in the bucket."""
+    @staticmethod
+    def count_total_logs() -> int:
         query = f'''
         from(bucket: "{INFLUXDB_BUCKET}")
           |> range(start: 0)
@@ -89,9 +49,20 @@ class InfluxDBStorage(LogStorage):
           |> count(column: "_value")
         '''
 
-        result = self.query_api.query(org=INFLUXDB_ORG, query=query)
+        result = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG).query_api()\
+            .query(org=INFLUXDB_ORG, query=query)
         total_count = 0
         for table in result:
             for record in table.records:
                 total_count += record["_value"]
         return total_count
+
+    # def query_log_data(self, log_data: dict):
+    #     try:
+    #         self.write_api.write(
+    #             bucket=INFLUXDB_BUCKET,
+    #             org=INFLUXDB_ORG,
+    #             record=log_data,
+    #         )
+    #     except Exception as e:
+    #         logging.error(f"Failed to write log to InfluxDB: {e}")

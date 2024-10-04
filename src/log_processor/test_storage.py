@@ -22,13 +22,13 @@ class TestInfluxDBStorageIntegration(unittest.TestCase):
         }
 
         self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
-        self.storage = InfluxDBStorage(self.influx_client)
+        self.storage = InfluxDBStorage()
 
     def test_store_and_query_log(self):
         # we want to test that the log data gets stored in influxdb as we want, so we want to test against actual db
         self.storage.store_log(self.test_log_data)
 
-        result = self.storage.query_api.query(
+        result = self.influx_client.query_api().query(
             org=INFLUXDB_ORG,
             query=f'''
                 from(bucket: "{INFLUXDB_BUCKET}")

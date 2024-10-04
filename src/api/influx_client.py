@@ -53,7 +53,8 @@ class InfluxClient:
         latency_query = f'''
         from(bucket: "{self.bucket}")
           |> range(start: {start_time}, stop: {end_time})
-          |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}" and r._field == "duration")
+          |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}")
+          |> filter(fn: (r) => r._field == "duration")
           |> group(columns: ["customer_id"])
           |> keep(columns: ["_value"])
         '''
@@ -89,3 +90,4 @@ class InfluxClient:
             "median_latency": median_latency if median_latency else None,
             "p99_latency": p99_latency if p99_latency else None
         }
+

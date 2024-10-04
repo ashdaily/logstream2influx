@@ -1,30 +1,32 @@
 import logging
+from datetime import timedelta
+
 import bytewax.operators as op
 from bytewax.dataflow import Dataflow
-from bytewax.connectors.stdio import StdOutSink
 from polling_source import LogPollingSource
 from log_handler import LogHandler
+from config import STREAM_MAX_SIZE, STREAM_MAX_WAIT_TIME_IN_SECONDS
 
 
 def create_dataflow(log_file_path, influx_storage):
     logging.info(f"Creating dataflow for log file: {log_file_path}")
     flow = Dataflow("log_processor_flow")
 
-    # Poll the log file for new entries every 5 seconds
-    log_stream = op.input("polling_input", flow, LogPollingSource(log_file_path, 5))
-    logging.info("Log polling source created.")
+    log_stream = op.input("polling_input", flow, LogPollingSource(log_file_path, poll_interval=.001))
 
-    # Extract the log line (the second element of the tuple)
-    extracted_log_stream = op.map("extract_log_line", log_stream, lambda x: x[1])
-    logging.info("Log extraction step added to dataflow.")
+    logging.info("stream is setup to collect {STREAM_MAX_SIZE}, with a timeout {STREAM_MAX_WAIT_TIME_IN_SECONDS}")
+    collected_stream = op.collect(
+        "log_processor_flow", log_stream,
+        timeout=timedelta(seconds=STREAM_MAX_WAIT_TIME_IN_SECONDS), max_size=STREAM_MAX_SIZE
+    )
 
-    # Process each log entry using the LogProcessor
+    extracted_stream = op.map("extract_log_line", collected_stream, lambda x: x[1])
+
     log_processor = LogHandler(influx_storage)
-    processed_stream = op.map("process_log", extracted_log_stream, log_processor.handle_log)
+    processed_stream = op.map("process_log", extracted_stream, log_processor.handle_log)
     logging.info("Log processing step added to dataflow.")
 
-    # Output to StdOut (for debugging) TODO: maybe remove later
-    op.output("stdout_output", processed_stream, StdOutSink())
-    logging.info("Output step added to dataflow.")
+    op.inspect("inspect_step", processed_stream, lambda step_id, x: None)
+    logging.info("Inspect step added to dataflow.")
 
     return flow

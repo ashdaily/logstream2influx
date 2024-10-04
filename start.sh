@@ -2,14 +2,32 @@
 # Check if the log file exists
 ./cleanup.sh
 
-LOG_FILE="./src/log_generator/api_requests.log"
+GEN_LOG_FILE="./src/log_generator/api_requests.log"
+PROCESSOR_LOG_FILE="./src/log_processor/log_processor.log"
+LOG_GEN_LOG_FILE="./src/log_generator/log_generator.log"
 
-if [ -f "$LOG_FILE" ]; then
-    echo "$LOG_FILE exists."
+if [ -f "$GEN_LOG_FILE" ]; then
+    echo "$GEN_LOG_FILE exists."
 else
-    echo "$LOG_FILE does not exist. Creating an empty log file."
-    touch "$LOG_FILE"
-    echo "$LOG_FILE has been created."
+    echo "$GEN_LOG_FILE does not exist. Creating an empty log file."
+    touch "$GEN_LOG_FILE"
+    echo "$GEN_LOG_FILE has been created."
+fi
+
+if [ -f "$PROCESSOR_LOG_FILE" ]; then
+    echo "$PROCESSOR_LOG_FILE exists."
+else
+    echo "$PROCESSOR_LOG_FILE does not exist. Creating an empty log file."
+    touch "$PROCESSOR_LOG_FILE"
+    echo "$PROCESSOR_LOG_FILE has been created."
+fi
+
+if [ -f "$LOG_GEN_LOG_FILE" ]; then
+    echo "$LOG_GEN_LOG_FILE exists."
+else
+    echo "$LOG_GEN_LOG_FILE does not exist. Creating an empty log file."
+    touch "$LOG_GEN_LOG_FILE"
+    echo "$LOG_GEN_LOG_FILE has been created."
 fi
 
 echo "Building Docker Compose services..."
