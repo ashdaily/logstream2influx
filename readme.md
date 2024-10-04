@@ -27,14 +27,17 @@ sequenceDiagram
 ```bash
 chmod +x ./start.sh && ./start.sh
 ```
-- Simulates the end to end flow, runs `log_generator`, `log_processor`, `influx_db`, `api`  
+- Simulates the end to end flow, runs `log_generator`, `log_processor`, `influx_db`, `api`
+- `log_generator` starts writing logs in `src/log_generator/api_requests.log`, stops when max limit is reached.
+- `src/log_processor` creates a DataFlow, waits for PollingSource to seek logs by polling every 1ms, once logs are read by the PollingSource, they are streamed by Bytewax collector which collects list of logs, Bytewax collect feature streams the logs in batches of streams to LogHandler which batch saves the logs to InfluxDB.
+ 
 
 ### Log Generator
 - Log Generator (`src/log_generator`) : Responsible for ingesting logs in `api_requests.log` at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS`. 
 - For example : `LOG_BATCH_SIZE=1` and `LOG_INTERVAL_SECONDS=60` means Log Generator will ingest one log line per `60` seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible. 
 
 ### Log Processor
-- LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to `ByteWax.DataFlow` which hands it over to Log Handler which does some simple string to dict transformation and dumps it in the InfluxDB
+- LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to `ByteWax.DataFlow` which hands it over to Log Handler transforms the log lines in data structure that's viable for InfluxDB and saves batches of these dicts.
 - LogProcessor has some unit tests and some integration test that test against the InfluxDB docker instance.
 
 ### Api
