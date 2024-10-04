@@ -1,7 +1,6 @@
 import logging
 import os
 from bytewax.inputs import SimplePollingSource
-import time
 from datetime import timedelta
 
 
@@ -18,12 +17,8 @@ class LogPollingSource(SimplePollingSource):
     def next_item(self):
         line = self.log_file.readline().strip()
         if line:
-            logging.info(f"New log line found: {line}")
-            return ("GLOBAL_LOG_ID", line)  # Return the log line with a constant key
-        else:
-            logging.info("No new log line found, sleeping for 1 second.")
-            time.sleep(1)  # Sleep if no new log line is found
-            return None
+            return ("ALL", line)
+        return None
 
     def close(self):
         logging.info(f"Closing log file: {self.log_file_path}")
