@@ -11,7 +11,7 @@ class LogGenerator:
         self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE"))
         self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS"))
         self.log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
-        self.max_logs = 10000  # Stop after 10k logs
+        self.max_logs = int(os.getenv("MAX_LOGS_TO_GENERATE", 10000))  # Stop after 10k logs
 
         # Log Data initialization
         random.seed(42)  # Set seed for reproducibility

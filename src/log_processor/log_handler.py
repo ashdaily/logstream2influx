@@ -54,7 +54,7 @@ class LogHandler(LogHandlerBase):
                 }
                 return record
             else:
-                logging.critical(f"Invalid log line: {log_line}")
+                logging.debug(f"Invalid log line: {log_line}")
         except Exception as e:
-            logging.error(f"Error processing log line: {log_line}. Error: {e}")
+            logging.debug(f"Error processing log line: {log_line}. Error: {e}")
             return None
