@@ -23,17 +23,11 @@ sequenceDiagram
     LogProcessor->>InfluxDB Storage: Store logs in InfluxDB
 ```
 
-#### Run the project
+## Run the project
 ```bash
 chmod +x ./start.sh && ./start.sh
 ```
-
-```bash
-chmod +x ./cleanup.sh && ./cleanup.sh
-```
-
-- Note that `chmod` command is required only the first time.
-
+- Simulates the end to end flow, runs `log_generator`, `log_processor`, `influx_db`, `api`  
 
 ### Log Generator
 - Log Generator (`src/log_generator`) : Responsible for ingesting logs in `api_requests.log` at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS`. 
@@ -43,24 +37,23 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 - LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to `ByteWax.DataFlow` which hands it over to Log Handler which does some simple string to dict transformation and dumps it in the InfluxDB
 - LogProcessor has some unit tests and some integration test that test against the InfluxDB docker instance.
 
+### Api
+- Available once project starts on `http://127.0.0.1:8000/docs`
+- Sample request
+```bash
+curl -X 'GET' \
+  'http://127.0.0.1:8000/customers/cust_1/stats?from_date=2024-10-01' \
+  -H 'accept: application/json'
+```
+
+### Run Tests
 ```bash
 chmod +x ./run_tests.sh && run_tests.sh
 ```
 
-- If the containers are running, you can also run the tests using docker commands
-
+### Clean up setup
 ```bash
-docker run --rm -it log_processor python -m unittest
+chmod +x ./cleanup.sh && ./cleanup.sh
 ```
 
-### RestApi to search logs for customers
-
-- Is under progress ...
-
-### Stuff in todo
-- Rest Api integration
-- Query fixing to cover all days from start date
-- Add tests for Api
-- Validate sanity with integration tests
-- Consider optimizing query
-- Async query to db using custom http implementation (bit lengthy task but possible)
+- <p style="color: red">Note: that <code>`chmod`</code> command is required only the first time.</p>
