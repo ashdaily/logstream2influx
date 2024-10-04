@@ -2,12 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY .src/log_processor /app/
 RUN pip install --no-cache-dir -r requirements.txt
-
-RUN pip install bytewax-cli # can remove later
-
-COPY . /app/
 
 ARG WORKERS=4
 ENV WORKERS=${WORKERS}
