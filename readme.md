@@ -60,3 +60,8 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 ```
 
 - <p style="color: red">Note: that <code>`chmod`</code> command is required only the first time.</p>
+
+# Future improvements
+- InfluxDB query could be async IO but inbuilt library lacks support.
+- Log file watching could be done better with watchdog event listeners
+- Could introduce caching for customer queries to speed up APIs and take the load off InfluxDB

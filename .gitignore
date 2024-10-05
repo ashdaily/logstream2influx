@@ -1,6 +1,8 @@
 # IDE, environment specific
 env/
 .idea/
+.DS_Store
+src/.DS_Store
 
 # log files
 src/api/customer_stats.log
