@@ -2,9 +2,10 @@ import unittest
 import os
 import time
 from polling_source import LogPollingSource
+from test_base import TestBase
 
 
-class TestLogPollingSource(unittest.TestCase):
+class TestLogPollingSource(TestBase):
     def setUp(self):
         self.log_file_path = 'test_log.log'
         with open(self.log_file_path, 'w') as f:

@@ -21,11 +21,17 @@ class InfluxDBStorage(LogStorage):
     def __init__(self):
         pass
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
+
     def store_log(self, log_data):
+        if not log_data:
+            logging.info(f"{self}.{self.__class__.store_log.__name__} was passed empty log_data.")
+            return
+
         try:
             with InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG) as _client:
-
-                with _client.write_api(write_options=WriteOptions(batch_size=LOG_BATCH_SIZE*100,
+                with _client.write_api(write_options=WriteOptions(batch_size=LOG_BATCH_SIZE,
                                                                   flush_interval=10_000,
                                                                   jitter_interval=2_000,
                                                                   retry_interval=5_000,
@@ -34,27 +40,24 @@ class InfluxDBStorage(LogStorage):
                                                                   max_close_wait=300_000,
                                                                   exponential_base=2)) as _write_client:
                     _write_client.write(INFLUXDB_BUCKET, INFLUXDB_ORG, log_data)
-
         except Exception as e:
             logging.error(f"Error writing log to InfluxDB: {e}")
         finally:
-            logging.info(f"Influx Db object count now: {InfluxDBStorage.count_total_logs()}")
+            logging.info(f"Influx Db object count now: {self.count_total_logs()}")
 
-    @staticmethod
-    def count_total_logs() -> int:
+    def count_total_logs(self) -> int:
         query = f'''
         from(bucket: "{INFLUXDB_BUCKET}")
           |> range(start: 0)
           |> filter(fn: (r) => r._measurement == "api_requests")
-          |> count(column: "_value")
         '''
 
         result = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG).query_api()\
             .query(org=INFLUXDB_ORG, query=query)
         total_count = 0
         for table in result:
-            for record in table.records:
-                total_count += record["_value"]
+            for _ in table.records:
+                total_count += 1
         return total_count
 
     # def query_log_data(self, log_data: dict):

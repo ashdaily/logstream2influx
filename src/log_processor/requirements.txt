@@ -2,3 +2,4 @@ bytewax==0.21.0
 influxdb-client==1.46.0
 watchdog==5.0.3
 python-dotenv==1.0.1
+pudb==2024.1.2
