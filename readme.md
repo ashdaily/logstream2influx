@@ -29,18 +29,22 @@ chmod +x ./start.sh && ./start.sh
 ```
 
 ### Step by step guide
-- `.start.sh` will run 4 docker containers using docker-compose, `log_generator`, `log_processor`, `influx_db`, `api`.
+- `start.sh` will run 4 docker containers using docker-compose, `log_generator`, `log_processor`, `influx_db`, `api`.
 - What happens when `start.sh` is launched:
+
   - we remove any previous log files to give us a fresh start.
-  - we create empty log files as well, for example: `./src/log_generator/api_requests.log` is where log_generator service will append logs.
-  - we also do some other cleanup to give us fresh start, stopping or pruning existing running containers for these services.
-  - Next, we spin up InfluxDB which is time series nosql database, docker-compose takes care of initialising it with admin credentials, bucket_name and other required meta deta.
-  - All metadata which is used in initialising InfluxDB is read from `.env.local` file
+  - we remove any data influxdb to give us a fresh start.
+  - we create empty log files for service logs as well as `./src/log_generator/api_requests.log` which is where `log_generator` service will append logs.
+  - we also do some other cleanup to give us fresh start, stopping existing running containers, removing volumes for these services.
+  - Next, we spin up InfluxDB which is time series nosql database, docker-compose takes care of initialising it with required credentials, bucket_name, org_name etc.
+  - All metadata which is used in initialising InfluxDB is read from `.env.local` file.
   - We then wait for InfluxDB to be healthy.
-  - We then spin up log_processor, wait for it to be healthy
-  - We then spin up log_generator which waits again for log_processor to be healthy.
+  - We then spin up log_processor.
+  - We then spin up log_generator which waits for log_processor to spin up.
+
+- What happens when we are up and running ?
 - `log_generator` starts writing logs in `src/log_generator/api_requests.log` automatically:
-  - Log generation happens at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS` and stops after `MAX_LOGS_TO_GENERATE`
+  - Log generation happens at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS` and stops after `MAX_LOGS_TO_GENERATE`, you can adjust these, `CTRL +C` and start again `start.sh`. 
   - For example : `LOG_BATCH_SIZE=1` and `LOG_INTERVAL_SECONDS=60` means Log Generator will ingest one log line per `60` seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible.
 - `log_processor` :
   - Once it's ready, it creates a DataFlow, waits for PollingSource to seek logs by polling every 1ms.
@@ -55,12 +59,12 @@ collected_stream = op.collect(
         max_size=STREAM_MAX_SIZE # after these many log lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
     )
 ```
-  - `log_handler` will process the logs to db.
-  - `log_processor` is running 4 workers which can parallelize the stream work and can be passed when building the docker image as env vars.
+  - `log_handler` will batch write the logs in the db.
+  - `log_processor` is running 4 workers which can parallelize the stream work and number of workers can be passed when building the docker image as env vars.
 
 ### How to validate results ?
-- Run the project with default settings in `.env.local` which only add 2 customers and 10 total log lines totally random.
-- Hit the Api mentioned below but make sure to look for logs `tail -f src/log_generator/api_requests.log`
+- Run the project with default settings in `.env.local` which only adds 10 total log lines totally random only for 2 customers.
+- Hit the Api mentioned below but make sure to look for logs `tail -f src/log_generator/api_requests.log` so you can validate API results with logs.
 
 ### API
 - Available once project starts on `http://127.0.0.1:8000/docs`
@@ -97,6 +101,7 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 
 # Future improvements
 
-- Log file watching could be done better with watchdog event listeners
+- Log file watching could be done better with watchdog event listeners.
 - Could introduce caching for customer queries to speed up APIs and take the load off InfluxDB
 - InfluxDB query could be async IO but inbuilt library lacks support but has http API.
+- Re-think about db cardinality as customer_id is saved under tags.
