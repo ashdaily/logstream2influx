@@ -76,6 +76,6 @@ class LogGenerator:
 
 if __name__ == '__main__':
     import time
-    time.sleep(10)# HACK: extra wait time for log_processor to init
+    time.sleep(10)  # HACK: extra wait time for log_processor to initialise
     log_generator = LogGenerator()
     log_generator.ingest_logs()

@@ -22,8 +22,8 @@ def create_dataflow(log_file_path, influx_storage):
 
     extracted_stream = op.map("extract_log_line", collected_stream, lambda x: x[1])
 
-    log_processor = LogHandler(influx_storage)
-    processed_stream = op.map("process_log", extracted_stream, log_processor.handle_log)
+    log_handler_cls = LogHandler(influx_storage)
+    processed_stream = op.map("process_log", extracted_stream, log_handler_cls.handle_log)
     logging.info("Log processing step added to dataflow.")
 
     op.inspect("inspect_step", processed_stream, lambda step_id, x: None)

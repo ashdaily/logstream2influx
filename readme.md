@@ -27,20 +27,42 @@ sequenceDiagram
 ```bash
 chmod +x ./start.sh && ./start.sh
 ```
-- Simulates the end to end flow, runs `log_generator`, `log_processor`, `influx_db`, `api`
-- `log_generator` starts writing logs in `src/log_generator/api_requests.log`, stops when max limit is reached.
-- `src/log_processor` creates a DataFlow, waits for PollingSource to seek logs by polling every 1ms, once logs are read by the PollingSource, they are streamed by Bytewax collector which collects list of logs, Bytewax collect feature streams the logs in batches of streams to LogHandler which batch saves the logs to InfluxDB.
- 
 
-### Log Generator
-- Log Generator (`src/log_generator`) : Responsible for ingesting logs in `api_requests.log` at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS`. 
-- For example : `LOG_BATCH_SIZE=1` and `LOG_INTERVAL_SECONDS=60` means Log Generator will ingest one log line per `60` seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible. 
+### Step by step guide
+- `.start.sh` will run 4 docker containers using docker-compose, `log_generator`, `log_processor`, `influx_db`, `api`.
+- What happens when `start.sh` is launched:
+  - we remove any previous log files to give us a fresh start.
+  - we create empty log files as well, for example: `./src/log_generator/api_requests.log` is where log_generator service will append logs.
+  - we also do some other cleanup to give us fresh start, stopping or pruning existing running containers for these services.
+  - Next, we spin up InfluxDB which is time series nosql database, docker-compose takes care of initialising it with admin credentials, bucket_name and other required meta deta.
+  - All metadata which is used in initialising InfluxDB is read from `.env.local` file
+  - We then wait for InfluxDB to be healthy.
+  - We then spin up log_processor, wait for it to be healthy
+  - We then spin up log_generator which waits again for log_processor to be healthy.
+- `log_generator` starts writing logs in `src/log_generator/api_requests.log` automatically:
+  - Log generation happens at a rate. This rate is basically `LOG_BATCH_SIZE` per `LOG_INTERVAL_SECONDS` and stops after `MAX_LOGS_TO_GENERATE`
+  - For example : `LOG_BATCH_SIZE=1` and `LOG_INTERVAL_SECONDS=60` means Log Generator will ingest one log line per `60` seconds. You can increase or decrease it but to understand the flow it's recommended to keep it at low as possible.
+- `log_processor` :
+  - Once it's ready, it creates a DataFlow, waits for PollingSource to seek logs by polling every 1ms.
+  - LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates (`api_requests.log`) and seeks to the EOF and hands over the log line to `ByteWax.DataFlow`.
+  - The log stream is then collected using Bytewax collect feature `bytewax.operators.collect`.
+  - There are two configs here which are important and might need re-adjusting based on how fast we want to reflect data for api users.
+  - ```python
+collected_stream = op.collect(
+        "log_processor_flow", log_stream,
+        timeout=timedelta(seconds=STREAM_MAX_WAIT_TIME_IN_SECONDS), # after these many seconds all lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
+                                                                    # or
+        max_size=STREAM_MAX_SIZE # after these many log lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
+    )
+```
+  - `log_handler` will process the logs to db.
+  - `log_processor` is running 4 workers which can parallelize the stream work and can be passed when building the docker image as env vars.
 
-### Log Processor
-- LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates and seeks to the EOF and hands over the log line to `ByteWax.DataFlow` which hands it over to Log Handler transforms the log lines in data structure that's viable for InfluxDB and saves batches of these dicts.
-- LogProcessor has some unit tests and some integration test that test against the InfluxDB docker instance.
+### How to validate results ?
+- Run the project with default settings in `.env.local` which only add 2 customers and 10 total log lines totally random.
+- Hit the Api mentioned below but make sure to look for logs `tail -f src/log_generator/api_requests.log`
 
-### Api
+### API
 - Available once project starts on `http://127.0.0.1:8000/docs`
 - Sample request
 ```bash
@@ -50,11 +72,23 @@ curl -X 'GET' \
 ```
 
 ### Run Tests
+- Will run 22 tests, some of which are unit test, some are integration tests.
 ```bash
 chmod +x ./run_tests.sh && run_tests.sh
 ```
 
-### Clean up setup
+### Want to manually run tests ?
+- Test get your local setup ready for running local tests run:
+```bash
+chmod +x ./testmode.sh && testmode.sh
+```
+- Then you can run the test as below (example):
+- ```bash
+docker exec -it log_processor python -m unittest test_logprocessor_storage_integration.TestCustomerStatsIntegration.test_log_handler_and_storage
+```
+
+### Clean up (optional)
+Clean setup if you want but it is not required as other scripts will run a clean up before doing what they need to.
 ```bash
 chmod +x ./cleanup.sh && ./cleanup.sh
 ```
@@ -62,6 +96,7 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 - <p style="color: red">Note: that <code>`chmod`</code> command is required only the first time.</p>
 
 # Future improvements
-- InfluxDB query could be async IO but inbuilt library lacks support.
+
 - Log file watching could be done better with watchdog event listeners
 - Could introduce caching for customer queries to speed up APIs and take the load off InfluxDB
+- InfluxDB query could be async IO but inbuilt library lacks support but has http API.
