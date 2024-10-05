@@ -1,4 +1,5 @@
-### Logs -> Bytewax -> InfluxDB :
+### Logs->BytewaxDataFLow->InfluxDB :
+[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/9zWYBESC2GpoCp5xDEXCRq/YUvD74ity3tinAomZ6Lpke/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/9zWYBESC2GpoCp5xDEXCRq/YUvD74ity3tinAomZ6Lpke/tree/main)
 
 ```mermaid
 sequenceDiagram
