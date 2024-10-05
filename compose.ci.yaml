@@ -55,6 +55,7 @@ services:
       MAX_LOGS_TO_GENERATE: ${MAX_LOGS_TO_GENERATE}
     networks:
       - rated_network
+    depends_on:
       - log_processor
     restart: unless-stopped
 
