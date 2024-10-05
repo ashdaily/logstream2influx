@@ -14,7 +14,7 @@ class LogGenerator:
 
         # Log Data initialization
         random.seed(42)  # Set seed for reproducibility
-        self.customer_ids = [f"cust_{i}" for i in range(1, 3)] # reduce number of customers to validate query
+        self.customer_ids = [f"cust_{i}" for i in range(1, 51)]
         self.request_paths = ["/api/v1/resource1", "/api/v1/resource2", "/api/v1/resource3", "/api/v1/resource4"]
         self.status_codes = [200, 201, 400, 401, 403, 404, 500]
         self.durations = [random.uniform(0.1, 2.0) for _ in range(self.max_logs)]
@@ -35,8 +35,9 @@ class LogGenerator:
 
     def generate_timestamp(self):
         """Generates a random timestamp within the past 30 days."""
-        start_date = datetime.datetime.now() - datetime.timedelta(days=2)
-        random_seconds = random.randint(0, 30 * 24 * 60 * 60)
+        past_days = 30
+        start_date = datetime.datetime.now() - datetime.timedelta(days=past_days)
+        random_seconds = random.randint(0, past_days * 24 * 60 * 60)
         return start_date + datetime.timedelta(seconds=random_seconds)
 
     def generate_log_entry(self):
