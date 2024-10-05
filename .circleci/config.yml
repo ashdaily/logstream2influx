@@ -32,7 +32,7 @@ jobs:
           command: ./cleanup.sh
       - run:
           name: Test mode
-          command: ./testmode.sh
+          command: ./testmode.ci.sh
       - run:
           name: Spin Up Influx DB
           command: docker compose -f compose.ci.yaml --env-file .env.local up -d rated_db
