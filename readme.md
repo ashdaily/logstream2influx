@@ -84,9 +84,18 @@ curl -X 'GET' \
 ---
 
 ### How to validate results ?
-- Run the project with default settings in `.env.local` which only adds 10 total log lines totally random only for 2 customers.
-- Hit the Api mentioned below but make sure to look for logs `tail -f src/log_generator/api_requests.log` so you can validate API results with logs.
-- You can also run integration tests, read below how to run them.
+- Hit the Api mentioned below but make sure to look for logs `less src/log_generator/api_requests.log` so you can validate API results with logs.
+- You can also run integration tests to validate results, read below how to run them.
+- Pro tip: reduce log frequency of log generator
+- Inside the .env.local change log generator env variables to reduce the frequency slow down logs and see clearly the flow of action.
+```bash
+# Log generator
+LOG_BATCH_SIZE=1
+LOG_INTERVAL_SECONDS=1
+LOG_FILE_PATH=api_requests.log
+MAX_LOGS_TO_GENERATE=100
+```
+This will generate a total of 100 logs at the rate of 1 log per second.
 
 ---
 
