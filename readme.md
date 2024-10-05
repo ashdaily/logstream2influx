@@ -64,9 +64,9 @@ chmod +x ./start.sh && ./start.sh
 ```python
 collected_stream = op.collect(
         "log_processor_flow", log_stream,
-        timeout=timedelta(seconds=STREAM_MAX_WAIT_TIME_IN_SECONDS), # after these many seconds all lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
+        timeout=timedelta(seconds=STREAM_MAX_WAIT_TIME_IN_SECONDS), # after these many seconds all lines read by polling source, stream of list of log lines is handed over to log_handler_cls.handle_log
                                                                     # or
-        max_size=STREAM_MAX_SIZE # after these many log lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
+        max_size=STREAM_MAX_SIZE # after these many log lines read by polling source, stream of list of log lines is handed over to log_handler_cls.handle_log
     )
 ```
   - `log_handler.py` will batch write the logs in the db.
@@ -89,6 +89,7 @@ curl -X 'GET' \
 - You can also run integration tests to validate results, read below how to run them.
 - Pro tip: reduce log frequency of log generator
 - Inside the .env.local change log generator env variables to reduce the frequency slow down logs and see clearly the flow of action.
+
 ```bash
 # Log generator
 LOG_BATCH_SIZE=1
@@ -114,7 +115,7 @@ chmod +x ./run_tests.sh && run_tests.sh
 chmod +x ./testmode.sh && testmode.sh
 ```
 - Then you can run the test as below (example):
-- ```bash
+```bash
 docker exec -it log_processor python -m unittest test_logprocessor_storage_integration.TestCustomerStatsIntegration.test_log_handler_and_storage
 ```
 
