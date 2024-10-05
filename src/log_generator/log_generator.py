@@ -34,9 +34,9 @@ class LogGenerator:
         )
 
     def generate_timestamp(self):
-        """Generates a random timestamp within the past 2 days."""
+        """Generates a random timestamp within the past 30 days."""
         start_date = datetime.datetime.now() - datetime.timedelta(days=2)
-        random_seconds = random.randint(0, 2 * 24 * 60 * 60)
+        random_seconds = random.randint(0, 30 * 24 * 60 * 60)
         return start_date + datetime.timedelta(seconds=random_seconds)
 
     def generate_log_entry(self):
