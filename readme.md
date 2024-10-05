@@ -78,7 +78,7 @@ collected_stream = op.collect(
 - Sample request
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/customers/cust_1/stats?from_date=2024-10-01' \
+  'http://127.0.0.1:8000/customers/cust_1/stats?from_date=1970-01-01' \
   -H 'accept: application/json'
 ```
 ---
