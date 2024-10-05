@@ -27,50 +27,45 @@ class InfluxClient:
     @staticmethod
     def get_start_end_times(_date: str) -> Tuple[str, str]:
         start_time: datetime = datetime.strptime(_date, "%Y-%m-%d")
-        end_time: datetime = datetime.utcnow()  # Today's date as the end time
+        end_time: datetime = datetime.now()  # Today's date as the end time
         return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
 
     def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
 
-        # Fetch successful requests (2xx/3xx status codes)
-        success_query = f'''
+        # Fetch all fields (we will filter and count based on the unique _time)
+        query = f'''
         from(bucket: "{self.bucket}")
           |> range(start: {start_time}, stop: {end_time})
           |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}")
-          |> filter(fn: (r) => r.success == "1")
+          |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
         '''
 
-        # Fetch failed requests (non-2xx/3xx status codes)
-        failed_query = f'''
-        from(bucket: "{self.bucket}")
-          |> range(start: {start_time}, stop: {end_time})
-          |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}")
-          |> filter(fn: (r) => r.success == "0")
-        '''
+        result = self.reader_client.query(org=self.org, query=query)
 
-        # Fetch latency data
-        latency_query = f'''
-        from(bucket: "{self.bucket}")
-          |> range(start: {start_time}, stop: {end_time})
-          |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}")
-          |> filter(fn: (r) => r._field == "duration")
-          |> group(columns: ["customer_id"])
-          |> keep(columns: ["_value"])
-        '''
+        timestamps = set()
+        total_success = 0
+        total_failed = 0
+        latencies = []
 
-        # Count successful requests
-        success_result = self.reader_client.query(org=self.org, query=success_query)
-        total_success = sum([1 for table in success_result for _ in table.records])
+        for table in result:
+            for record in table.records:
+                # Count only once per unique timestamp
+                timestamp = record.get_time()
+                if timestamp not in timestamps:
+                    timestamps.add(timestamp)
 
-        # Count failed requests
-        failed_result = self.reader_client.query(org=self.org, query=failed_query)
-        total_failed = sum([1 for table in failed_result for _ in table.records])
+                    # Success or failure determination
+                    if record['success'] == '1':
+                        total_success += 1
+                    else:
+                        total_failed += 1
+
+                # If the field is 'duration', collect it for latency calculations
+                if record['_field'] == 'duration' and isinstance(record["_value"], float):
+                    latencies.append(record["_value"])
 
         # Latency calculations (mean, median, p99)
-        latency_result = self.reader_client.query(org=self.org, query=latency_query)
-        latencies = [record["_value"] for table in latency_result for record in table.records]
-
         if latencies:
             mean_latency = sum(latencies) / len(latencies)
             median_latency = sorted(latencies)[len(latencies) // 2]
@@ -90,4 +85,3 @@ class InfluxClient:
             "median_latency": median_latency if median_latency else None,
             "p99_latency": p99_latency if p99_latency else None
         }
-
