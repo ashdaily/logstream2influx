@@ -51,7 +51,7 @@ chmod +x ./start.sh && ./start.sh
   - LogProcessor uses `ByteWax.SimplePollingSource` to poll the log file Log Generator creates (`api_requests.log`) and seeks to the EOF and hands over the log line to `ByteWax.DataFlow`.
   - The log stream is then collected using Bytewax collect feature `bytewax.operators.collect`.
   - There are two configs here which are important and might need re-adjusting based on how fast we want to reflect data for api users.
-  - ```python
+```python
 collected_stream = op.collect(
         "log_processor_flow", log_stream,
         timeout=timedelta(seconds=STREAM_MAX_WAIT_TIME_IN_SECONDS), # after these many seconds all lines read by polling source, stream of list of log lines is handed over to log_processor.handle_log
