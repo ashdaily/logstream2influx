@@ -1,14 +1,19 @@
-import unittest
+from influxdb_client import InfluxDBClient
 from log_handler import LogHandler
 from storage import InfluxDBStorage
-from sample_query import query_all_stats
+from test_influx_client import InfluxClient
+from test_base import TestBase
+
+INFLUXDB_URL = "http://rated_db:8086"
+INFLUXDB_TOKEN = "MyInitialAdminToken0=="
+INFLUXDB_ORG = "rated_org"
+INFLUXDB_BUCKET = "rated_http_logs_bucket"
 
 
-class TestCustomerStatsIntegration(unittest.TestCase):
+class TestCustomerStatsIntegration(TestBase):
 
     def setUp(self):
         self.storage = InfluxDBStorage()
-
         self.processor = LogHandler(self.storage)
 
         self.logs_cust_1 = [
@@ -27,34 +32,34 @@ class TestCustomerStatsIntegration(unittest.TestCase):
         ]
 
         # process all logs, eventually they get saved in influxdb
-        for log in self.logs_cust_1:
-            self.processor.handle_log(log)
-
-        for log in self.logs_cust_2:
-            self.processor.handle_log(log)
+        self.processor.handle_log(self.logs_cust_1)
+        self.processor.handle_log(self.logs_cust_2)
 
     def test_stats_for_cust_1(self):
-        stats = query_all_stats("cust_1", "2024-09-29")
+        stats = InfluxClient().get_stats("cust_1", "2024-09-29")
 
-        self.assertEqual(stats["total_success"], 3)
-        self.assertEqual(stats["total_failed"], 2)
-        self.assertAlmostEqual(stats["mean_latency"], 0.84, places=2)
+        self.assertEqual(stats["total_requests"], 5)
+        self.assertEqual(stats["successful_requests"], 3)
+        self.assertEqual(stats["failed_requests"], 2)
+        self.assertAlmostEqual(stats["average_latency"], 0.84, places=2)
         self.assertAlmostEqual(stats["median_latency"], 0.7, places=2)
         self.assertAlmostEqual(stats["p99_latency"], 1.5, places=2)
         self.assertEqual(stats["uptime"], 60.0)
 
     def test_stats_for_cust_2(self):
-        stats = query_all_stats("cust_2", "2024-09-30")
+        stats = InfluxClient().get_stats("cust_2", "2024-09-30")
 
-        self.assertEqual(stats["total_success"], 2)
-        self.assertEqual(stats["total_failed"], 2)
-        self.assertAlmostEqual(stats["mean_latency"], 1.4, places=2)
+        self.assertEqual(stats["total_requests"], 4)
+        self.assertEqual(stats["successful_requests"], 2)
+        self.assertEqual(stats["failed_requests"], 2)
+        self.assertAlmostEqual(stats["average_latency"], 1.4, places=2)
         self.assertAlmostEqual(stats["median_latency"], 1.6, places=2)
         self.assertAlmostEqual(stats["p99_latency"], 1.7, places=2)
         self.assertEqual(stats["uptime"], 50.0)
 
     def tearDown(self):
         # nuke the db bucket ;D
+        self.influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         delete_api = self.influx_client.delete_api()
         delete_api.delete(
             start="1970-01-01T00:00:00Z",
