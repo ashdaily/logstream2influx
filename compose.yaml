@@ -12,6 +12,7 @@ services:
       ports:
         - "8000:8000"
       depends_on:
+        - log_processor
         - rated_db
       volumes:
         - ./src/api:/api
@@ -57,6 +58,7 @@ services:
       LOG_BATCH_SIZE: ${LOG_BATCH_SIZE}
       LOG_INTERVAL_SECONDS: ${LOG_INTERVAL_SECONDS}
       LOG_FILE_PATH: ${LOG_FILE_PATH}
+      MAX_LOGS_TO_GENERATE: ${MAX_LOGS_TO_GENERATE}
     volumes:
        - ./src/log_generator/:/log_generator/
     networks:

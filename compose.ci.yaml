@@ -49,8 +49,10 @@ services:
       LOG_BATCH_SIZE: ${LOG_BATCH_SIZE}
       LOG_INTERVAL_SECONDS: ${LOG_INTERVAL_SECONDS}
       LOG_FILE_PATH: ${LOG_FILE_PATH}
+      MAX_LOGS_TO_GENERATE: ${MAX_LOGS_TO_GENERATE}
     networks:
       - rated_network
+      - log_processor
     restart: unless-stopped
 
   rated_db:

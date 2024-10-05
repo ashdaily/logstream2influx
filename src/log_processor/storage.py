@@ -24,7 +24,7 @@ class InfluxDBStorage(LogStorage):
     def __repr__(self):
         return f"{self.__class__.__name__}"
 
-    def store_log(self, log_data):
+    def store_log(self, log_data) -> None:
         if not log_data:
             logging.info(f"{self}.{self.__class__.store_log.__name__} was passed empty log_data.")
             return
@@ -42,30 +42,3 @@ class InfluxDBStorage(LogStorage):
                     _write_client.write(INFLUXDB_BUCKET, INFLUXDB_ORG, log_data)
         except Exception as e:
             logging.error(f"Error writing log to InfluxDB: {e}")
-        finally:
-            logging.info(f"Influx Db object count now: {self.count_total_logs()}")
-
-    def count_total_logs(self) -> int:
-        query = f'''
-        from(bucket: "{INFLUXDB_BUCKET}")
-          |> range(start: 0)
-          |> filter(fn: (r) => r._measurement == "api_requests")
-        '''
-
-        result = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG).query_api()\
-            .query(org=INFLUXDB_ORG, query=query)
-        total_count = 0
-        for table in result:
-            for _ in table.records:
-                total_count += 1
-        return total_count
-
-    # def query_log_data(self, log_data: dict):
-    #     try:
-    #         self.write_api.write(
-    #             bucket=INFLUXDB_BUCKET,
-    #             org=INFLUXDB_ORG,
-    #             record=log_data,
-    #         )
-    #     except Exception as e:
-    #         logging.error(f"Failed to write log to InfluxDB: {e}")

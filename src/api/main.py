@@ -8,7 +8,7 @@ app.include_router(customers_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "API is up and running"}
+    return {"message": "Welcome to LogStream2Influx ;)"}
 
 
 if __name__ == "__main__":
