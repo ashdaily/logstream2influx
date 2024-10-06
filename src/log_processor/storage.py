@@ -13,27 +13,34 @@ class LogStorage(ABC):
 class InfluxDBStorage(LogStorage):
     def __init__(self):
         self.client = None
+        self.write_api = None
+        self.log_batch = []
+        self.batch_size = 50_000 #TODO: pass from env vars
 
     async def initialize(self):
         self.client = InfluxDBClientAsync(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+        self.write_api = self.client.write_api()
 
     async def store_log(self, log_data) -> None:
         if not log_data:
             logging.info("No log data to store.")
             return
 
-        try:
-            write_api = self.client.write_api()
-            batch_size = LOG_BATCH_SIZE
+        self.log_batch.extend(log_data)
 
-            # Split log_data into batches and write each batch
-            for i in range(0, len(log_data), batch_size):
-                batch = log_data[i:i + batch_size]
-                await write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=batch)
-                logging.info(f"Successfully wrote {len(batch)} logs to InfluxDB.")
+        if len(self.log_batch) >= self.batch_size:
+            await self.flush_logs()
+
+    async def flush_logs(self) -> None:
+        try:
+            await self.write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=self.log_batch)
+            logging.info(f"Successfully wrote {len(self.log_batch)} logs to InfluxDB.")
+            self.log_batch.clear()
         except Exception as e:
             logging.error(f"Error writing log to InfluxDB: {e}")
 
     async def close(self):
+        if self.log_batch:
+            await self.flush_logs()
         if self.client:
             await self.client.__aexit__(None, None, None)

@@ -19,7 +19,8 @@ def create_dataflow(log_file_path):
     log_watcher = LogWatcher(log_file_path, stream_queue)
     log_watcher.start()
 
-    log_stream = op.input("polling_input", flow, LogPollingSource(stream_queue, poll_interval=0.001))
+    log_stream = op.input("polling_input", flow,
+                          LogPollingSource(stream_queue, poll_interval=1))  # poll interval i micro seconds
 
     logging.info(f"stream is setup to collect {STREAM_MAX_SIZE}, with a timeout {STREAM_MAX_WAIT_TIME_IN_SECONDS}")
     collected_stream = op.collect(

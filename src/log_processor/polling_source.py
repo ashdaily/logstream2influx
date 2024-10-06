@@ -8,7 +8,7 @@ class LogPollingSource(SimplePollingSource):
     def __init__(self, stream_queue, poll_interval):
         logging.debug(f"Initializing LogPollingSource with queue and interval: {poll_interval}s")
         self.stream_queue = stream_queue
-        super().__init__(timedelta(seconds=poll_interval))
+        super().__init__(timedelta(microseconds=poll_interval))
 
     def next_item(self):
         try:
