@@ -4,13 +4,18 @@ import datetime
 import time
 import logging
 
+
 class LogGenerator:
     def __init__(self):
-        # Load environment variables and parameters
-        self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE"))
-        self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS"))
-        self.log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
-        self.max_logs = int(os.getenv("MAX_LOGS_TO_GENERATE"))  # Stop after max number of logs
+        # Load environment variables with error handling
+        try:
+            self.log_batch_size = int(os.getenv("LOG_BATCH_SIZE"))
+            self.log_interval_seconds = int(os.getenv("LOG_INTERVAL_SECONDS"))
+            self.log_file_path = os.getenv("LOG_FILE_PATH", "api_requests.log")
+            self.max_logs = int(os.getenv("MAX_LOGS_TO_GENERATE"))
+        except (TypeError, ValueError) as e:
+            logging.error(f"Error reading environment variables: {e}")
+            raise
 
         # Log Data initialization
         random.seed(42)  # Set seed for reproducibility
@@ -61,13 +66,21 @@ class LogGenerator:
         logging.info(f"Starting log generation with batch size {self.log_batch_size} and interval {self.log_interval_seconds}s")
 
         while total_logs_written < self.max_logs:
-            with open(self.log_file_path, "a") as log_file:
-                for _ in range(self.log_batch_size):
-                    if total_logs_written >= self.max_logs:
-                        logging.info(f"Reached max log limit of {self.max_logs}. Stopping log generation.")
-                        return
-                    log_file.write(self.generate_log_entry())
-                    total_logs_written += 1
+            log_batch = []
+            for _ in range(self.log_batch_size):
+                if total_logs_written >= self.max_logs:
+                    logging.info(f"Reached max log limit of {self.max_logs}. Stopping log generation.")
+                    return
+                log_batch.append(self.generate_log_entry())
+                total_logs_written += 1
+
+            try:
+                with open(self.log_file_path, "a") as log_file:
+                    log_file.writelines(log_batch)
+                    log_file.flush()
+            except OSError as e:
+                logging.error(f"Error writing to log file {self.log_file_path}: {e}")
+                return
 
             logging.info(f"Generated {self.log_batch_size} logs. Total logs written: {total_logs_written}")
             time.sleep(self.log_interval_seconds)
@@ -76,7 +89,6 @@ class LogGenerator:
 
 
 if __name__ == '__main__':
-    import time
     time.sleep(10)  # HACK: extra initial wait time for log_processor to get ready
     log_generator = LogGenerator()
     log_generator.ingest_logs()

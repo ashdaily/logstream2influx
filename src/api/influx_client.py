@@ -1,3 +1,5 @@
+import logging
+
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime, timedelta
 from typing import Dict, Tuple, Optional
@@ -29,6 +31,67 @@ class InfluxClient:
         start_time: datetime = datetime.strptime(_date, "%Y-%m-%d")
         end_time: datetime = datetime.now()  # Today's date as the end time
         return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
+
+    def get_all_stats(self, _date: str) -> Optional[Dict[str, float]]:
+        start_time, end_time = InfluxClient.get_start_end_times(_date)
+
+        query = f'''
+                from(bucket: "{self.bucket}")
+                  |> range(start: {start_time}, stop: {end_time})
+                  |> filter(fn: (r) => r._measurement == "api_requests")
+                  |> keep(columns: ["_time", "customer_id", "success", "_field", "_value", "request_path"])
+                '''
+
+        result = self.reader_client.query(org=self.org, query=query)
+
+        unique_records = set()
+        total_success = 0
+        total_failed = 0
+        latencies = []
+
+        for table in result:
+            for record in table.records:
+                # Create a composite key using timestamp, customer_id
+                try:
+                    timestamp = record.get_time()
+                    customer_id = record['customer_id']
+                    composite_key = (timestamp, customer_id)
+                except Exception as e:
+                    logging.error(f"error while creating composite key: {e}")
+                else:
+                    if composite_key not in unique_records:
+                        unique_records.add(composite_key)
+
+                        success_value = int(record['success'])
+                        if success_value == 1:
+                            total_success += 1
+                        else:
+                            total_failed += 1
+
+                    if record['_field'] == 'duration' and isinstance(record["_value"], float):
+                        latencies.append(record["_value"])
+
+        # Latency calculations (mean, median, p99)
+        if latencies:
+            mean_latency = sum(latencies) / len(latencies)
+            median_latency = sorted(latencies)[len(latencies) // 2]
+            p99_latency = sorted(latencies)[int(0.99 * len(latencies))] if len(latencies) > 1 else latencies[-1]
+        else:
+            mean_latency = median_latency = p99_latency = None
+
+        # Calculate total requests and uptime percentage
+        total_requests = total_success + total_failed
+        uptime = (total_success / total_requests) * 100 if total_requests > 0 else 0
+
+        return {
+            "total_requests": total_requests or 0,
+            "successful_requests": total_success or 0,
+            "failed_requests": total_failed or 0,
+            "uptime": round(uptime, 5),
+            "average_latency": mean_latency if mean_latency else None,
+            "median_latency": median_latency if median_latency else None,
+            "p99_latency": p99_latency if p99_latency else None
+        }
 
     def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
