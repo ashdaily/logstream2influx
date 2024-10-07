@@ -89,6 +89,12 @@ curl -X 'GET' \
 - You can also run integration tests to validate results, read below how to run them.
 - Pro tip: reduce log frequency of log generator
 - Inside the .env.local change log generator env variables to reduce the frequency slow down logs and see clearly the flow of action.
+- You can also use this api below created to test customer stats for all customers after logs are all added in the db.
+```bash
+curl -X 'GET' \
+  'http://127.0.0.1:8000/customers/customer/stats/all?from_date=1970-01-01' \
+  -H 'accept: application/json'
+```
 
 ```bash
 # Log generator
@@ -133,7 +139,9 @@ chmod +x ./cleanup.sh && ./cleanup.sh
 
 # Future improvements
 
-- Log file watching could be done better with watchdog event listeners.
-- Could introduce caching for customer queries to speed up APIs and take the load off InfluxDB
-- InfluxDB query could be async IO but inbuilt library lacks support but has http API.
-- Re-think about db cardinality as customer_id is saved under tags.
+- Log file watching could be done better with watchdog event listeners. [This PR](https://github.com/ashdaily/logstream2influx/pull/1) actually integrates watchdog to watch logs here, is under experiment but seems to work great with bytewax.
+- The above PR works perfectly even at high rates of ingestion of logs like 10000 logs per second. All logs are read by watchdog, passed to bytewax via PollingSource and reached fine to db writer logic in `storage.py`, the only worry I had was data loss during writes about 5 to 15 logs were being lost when testing 10k writes per second.
+- InfluxDB query could be async IO but inbuilt library lacks proper support for it and data loss is widely reported during writes [This PR](https://github.com/ashdaily/logstream2influx/pull/1) configures async io while writing to db.
+- Latency calculations, P99 quantile calculations can easily be handled by db instead of client side (which is the case now).
+- Influxdb is built for high cardinality but re-think about db cardinality as customer_id is saved under tags which shouldn't have very high cardinality.
+- Maybe consider caching read queries ?
