@@ -1,7 +1,7 @@
 import logging
 
 from influxdb_client.client.write_api import SYNCHRONOUS
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Tuple, Optional
 
 from config import INFLUXDB_TOKEN, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_URL
@@ -9,6 +9,8 @@ from influxdb_client import InfluxDBClient
 
 
 class InfluxClient:
+    PRECISION = 5
+
     def __init__(self) -> None:
         self.bucket: str = INFLUXDB_BUCKET
         self.org: str = INFLUXDB_ORG
@@ -35,75 +37,67 @@ class InfluxClient:
     def get_all_stats(self, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
 
-        query = f'''
-        from(bucket: "{self.bucket}")
-          |> range(start: {start_time}, stop: {end_time})
-          |> filter(fn: (r) => r._measurement == "api_requests")
-          |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
-        '''
+        query = """
+                from(bucket: "{bucket}")
+                  |> range(start: {start_time}, stop: {end_time})
+                  |> filter(fn: (r) => r._measurement == "api_requests")
+                """.format(bucket=self.bucket, start_time=start_time, end_time=end_time)
 
         result = self.reader_client.query(org=self.org, query=query)
+
         return self._calculate(result)
 
     def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
-
-        # Fetch all fields (we will filter and count based on the unique _time)
-        query = f'''
-        from(bucket: "{self.bucket}")
-          |> range(start: {start_time}, stop: {end_time})
-          |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{_customer_id}")
-          |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
-        '''
-
-        result = self.reader_client.query(org=self.org, query=query)
-
-        timestamps = set()
-        total_success = 0
-        total_failed = 0
-        latencies = []
+        query = """
+                from(bucket: "{bucket}")
+                  |> range(start: {start_time}, stop: {end_time})
+                  |> filter(fn: (r) => r._measurement == "api_requests" and r.customer_id == "{customer_id}")
+                  |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
+                """.format(bucket=self.bucket, start_time=start_time, end_time=end_time, customer_id=_customer_id)
 
         result = self.reader_client.query(org=self.org, query=query)
         return self._calculate(result)
 
     def _calculate(self, _result) -> Optional[Dict[str, float]]:
-        timestamps = set()
-        total_success = 0
-        total_failed = 0
-        latencies = []
-
-        for table in _result:
-            for record in table.records:
-                timestamp = record.get_time()
-                if timestamp not in timestamps:
-                    timestamps.add(timestamp)
-
-                    if record['success'] == '1':
-                        total_success += 1
+        try:
+            stats = {}
+            for table in _result:
+                for record in table.records:
+                    metric = record.values.get("_field")
+                    value = record.values.get("_value")
+                    if stats.get(metric):
+                        stats[metric].append(value)
                     else:
-                        total_failed += 1
+                        stats[metric] = [value]
 
-                # If the field is 'duration', collect it for latency calculations
-                if record['_field'] == 'duration' and isinstance(record["_value"], float):
-                    latencies.append(record["_value"])
+            # Process total requests, success, and failed
+            for i, v in stats.items():
+                logging.info(f"{i}: {len(v)}")
+            total_requests = stats.get("total_requests", max([len(s) for s in stats.values()]))
+            total_success = stats.get("total_success", sum([1 if s < 400 else 0 for s in stats["status_code"]]))
+            total_failed = stats.get("total_failed", sum([1 if s >= 400 else 0 for s in stats["status_code"]]))
 
-        # Latency calculations (mean, median, p99)
-        if latencies:
-            mean_latency = sum(latencies) / len(latencies)
-            median_latency = sorted(latencies)[len(latencies) // 2]
-            p99_latency = sorted(latencies)[int(0.99 * len(latencies))] if len(latencies) > 1 else latencies[-1]
-        else:
-            mean_latency = median_latency = p99_latency = None
+            # Calculate average, median, and p99 latency
+            latencies = stats.get("duration", [])
 
-        total_requests = total_success + total_failed
-        uptime = (total_success / total_requests) * 100 if total_requests > 0 else 0
+            if latencies:
+                latencies = sorted(latencies)
+                average_latency = sum(latencies) / len(latencies) if latencies else None
+                median_latency = latencies[len(latencies) // 2] if latencies else None
+                p99_latency = latencies[int(len(latencies) * 0.99) - 1] if len(latencies) >= 100 else latencies[-1]
+            else:
+                average_latency, median_latency, p99_latency = None, None, None
 
-        return {
-            "total_requests": total_requests or 0,
-            "successful_requests": total_success or 0,
-            "failed_requests": total_failed or 0,
-            "uptime": round(uptime, 5),
-            "average_latency": mean_latency if mean_latency else None,
-            "median_latency": median_latency if median_latency else None,
-            "p99_latency": p99_latency if p99_latency else None
-        }
+            return {
+                "total_requests": total_requests,
+                "successful_requests": total_success,
+                "failed_requests": total_failed,
+                "uptime": round((total_success / total_requests) * 100, self.PRECISION) if total_requests else 0,
+                "average_latency": round(average_latency, self.PRECISION),
+                "median_latency": round(median_latency, self.PRECISION),
+                "p99_latency": round(p99_latency, self.PRECISION)
+            }
+        except Exception as e:
+            logging.error(f"Error while retrieving stats for all customers: {e}")
+            return None

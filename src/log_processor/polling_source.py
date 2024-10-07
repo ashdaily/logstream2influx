@@ -12,7 +12,7 @@ class LogPollingSource(SimplePollingSource):
         self.log_file.seek(0, os.SEEK_END)  # Move to the end of file
         logging.info(f"Opened log file: {log_file_path}, starting at the end.")
 
-        super().__init__(timedelta(seconds=poll_interval))
+        super().__init__(timedelta(milliseconds=poll_interval))
 
     def next_item(self):
         line = self.log_file.readline().strip()
