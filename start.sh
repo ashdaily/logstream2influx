@@ -30,8 +30,6 @@ else
     echo "$LOG_GEN_LOG_FILE has been created."
 fi
 
-echo "Building Docker Compose services..."
-docker compose -f compose.yaml --env-file .env.local build --no-cache
 
 echo "Starting Docker Compose services..."
 docker compose -f compose.yaml --env-file .env.local up

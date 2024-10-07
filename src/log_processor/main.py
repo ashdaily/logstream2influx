@@ -1,12 +1,6 @@
 import logging
-
-from config import (
-    LOG_FILE_PATH,
-    LOGGING_LEVEL
-)
-from storage import InfluxDBStorage
+from config import LOG_FILE_PATH, LOGGING_LEVEL
 from dataflow_manager import create_dataflow
-
 
 logging.basicConfig(
     level=getattr(logging, LOGGING_LEVEL, logging.INFO),
@@ -17,7 +11,4 @@ logging.basicConfig(
     ]
 )
 
-influx_storage = InfluxDBStorage()
-
-
-flow = create_dataflow(f"/log_generator/{LOG_FILE_PATH}", influx_storage)
+flow = create_dataflow(f"/log_generator/{LOG_FILE_PATH}")
