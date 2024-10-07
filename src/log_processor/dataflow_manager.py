@@ -12,7 +12,7 @@ def create_dataflow(log_file_path, influx_storage):
     logging.info(f"Creating dataflow for log file: {log_file_path}")
     flow = Dataflow("log_processor_flow")
 
-    log_stream = op.input("polling_input", flow, LogPollingSource(log_file_path, poll_interval=.001))
+    log_stream = op.input("polling_input", flow, LogPollingSource(log_file_path, poll_interval=1))
 
     logging.info(f"stream is setup to collect {STREAM_MAX_SIZE}, with a timeout {STREAM_MAX_WAIT_TIME_IN_SECONDS}")
     collected_stream = op.collect(

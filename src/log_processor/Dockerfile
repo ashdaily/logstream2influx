@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ARG WORKERS=4
-ENV WORKERS=${WORKERS}
+#ARG WORKERS=4
+#ENV WORKERS=${WORKERS}
 
-CMD sh -c "python -m bytewax.run --workers-per-process $WORKERS main"
+CMD sh -c "python -m bytewax.run main"

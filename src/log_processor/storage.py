@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 
 from influxdb_client import InfluxDBClient, WriteOptions
+from influxdb_client.client.write_api import SYNCHRONOUS
 from config import (
     INFLUXDB_BUCKET,
     INFLUXDB_ORG,
@@ -30,15 +31,23 @@ class InfluxDBStorage(LogStorage):
             return
 
         try:
-            with InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG) as _client:
-                with _client.write_api(write_options=WriteOptions(batch_size=LOG_BATCH_SIZE,
-                                                                  flush_interval=10_000,
-                                                                  jitter_interval=2_000,
-                                                                  retry_interval=5_000,
-                                                                  max_retries=5,
-                                                                  max_retry_delay=30_000,
-                                                                  max_close_wait=300_000,
-                                                                  exponential_base=2)) as _write_client:
-                    _write_client.write(INFLUXDB_BUCKET, INFLUXDB_ORG, log_data)
+            logging.info(f"InfluxDBClient writing: {len(log_data)} records")
+            _client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+            _client.write_api(write_options=WriteOptions(
+                batch_size=500, flush_interval=1000, jitter_interval=500, retry_interval=5000),
+                success_callback=self.success_cb, error_callback=self.error_cb, retry_callback=self.retry_cb)\
+                .write(INFLUXDB_BUCKET, INFLUXDB_ORG, log_data)
+
+            _client.close()
         except Exception as e:
             logging.error(f"Error writing log to InfluxDB: {e}")
+
+    def success_cb(self, details, data):
+        data = data.decode('utf-8').split('\n')
+        logging.info(f"Total Rows Inserted: {len(data)}")
+
+    def error_cb(self, details, data, exception):
+        logging.info(f"Influxdb error callback: details: {details}, exception: {exception}")
+
+    def retry_cb(self, details, data, exception):
+        logging.info('Influx db retry exception:', exception)
