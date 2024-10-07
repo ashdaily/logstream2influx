@@ -1,3 +1,5 @@
+import logging
+
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime, timedelta
 from typing import Dict, Tuple, Optional
@@ -30,6 +32,19 @@ class InfluxClient:
         end_time: datetime = datetime.now()  # Today's date as the end time
         return start_time.isoformat() + "Z", end_time.isoformat() + "Z"
 
+    def get_all_stats(self, _date: str) -> Optional[Dict[str, float]]:
+        start_time, end_time = InfluxClient.get_start_end_times(_date)
+
+        query = f'''
+        from(bucket: "{self.bucket}")
+          |> range(start: {start_time}, stop: {end_time})
+          |> filter(fn: (r) => r._measurement == "api_requests")
+          |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
+        '''
+
+        result = self.reader_client.query(org=self.org, query=query)
+        return self._calculate(result)
+
     def get_stats(self, _customer_id: str, _date: str) -> Optional[Dict[str, float]]:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
 
@@ -48,14 +63,21 @@ class InfluxClient:
         total_failed = 0
         latencies = []
 
-        for table in result:
+        result = self.reader_client.query(org=self.org, query=query)
+        return self._calculate(result)
+
+    def _calculate(self, _result) -> Optional[Dict[str, float]]:
+        timestamps = set()
+        total_success = 0
+        total_failed = 0
+        latencies = []
+
+        for table in _result:
             for record in table.records:
-                # Count only once per unique timestamp
                 timestamp = record.get_time()
                 if timestamp not in timestamps:
                     timestamps.add(timestamp)
 
-                    # Success or failure determination
                     if record['success'] == '1':
                         total_success += 1
                     else:
