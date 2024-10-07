@@ -36,40 +36,33 @@ class InfluxClient:
         start_time, end_time = InfluxClient.get_start_end_times(_date)
 
         query = f'''
-                from(bucket: "{self.bucket}")
-                  |> range(start: {start_time}, stop: {end_time})
-                  |> filter(fn: (r) => r._measurement == "api_requests")
-                  |> keep(columns: ["_time", "customer_id", "success", "_field", "_value", "request_path"])
-                '''
+        from(bucket: "{self.bucket}")
+          |> range(start: {start_time}, stop: {end_time})
+          |> filter(fn: (r) => r._measurement == "api_requests")
+          |> keep(columns: ["_time", "customer_id", "success", "_field", "_value"])
+        '''
 
         result = self.reader_client.query(org=self.org, query=query)
 
-        unique_records = set()
+        timestamps = set()
         total_success = 0
         total_failed = 0
         latencies = []
 
         for table in result:
             for record in table.records:
-                # Create a composite key using timestamp, customer_id
-                try:
-                    timestamp = record.get_time()
-                    customer_id = record['customer_id']
-                    composite_key = (timestamp, customer_id)
-                except Exception as e:
-                    logging.error(f"error while creating composite key: {e}")
-                else:
-                    if composite_key not in unique_records:
-                        unique_records.add(composite_key)
+                timestamp = record.get_time()
+                if timestamp not in timestamps:
+                    timestamps.add(timestamp)
 
-                        success_value = int(record['success'])
-                        if success_value == 1:
-                            total_success += 1
-                        else:
-                            total_failed += 1
+                    if record['success'] == '1':
+                        total_success += 1
+                    else:
+                        total_failed += 1
 
-                    if record['_field'] == 'duration' and isinstance(record["_value"], float):
-                        latencies.append(record["_value"])
+                # If the field is 'duration', collect it for latency calculations
+                if record['_field'] == 'duration' and isinstance(record["_value"], float):
+                    latencies.append(record["_value"])
 
         # Latency calculations (mean, median, p99)
         if latencies:
@@ -79,7 +72,6 @@ class InfluxClient:
         else:
             mean_latency = median_latency = p99_latency = None
 
-        # Calculate total requests and uptime percentage
         total_requests = total_success + total_failed
         uptime = (total_success / total_requests) * 100 if total_requests > 0 else 0
 

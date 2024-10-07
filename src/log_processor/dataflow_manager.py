@@ -41,6 +41,6 @@ def create_dataflow(log_file_path):
 
     logging.info("Log processing step added to dataflow.")
 
-    op.inspect("inspect_step", processed_stream, lambda step_id, x: logging.info(f"Processed log: {x}"))
+    op.inspect("inspect_step", processed_stream, lambda step_id, x: logging.info(f"Inspect: {step_id}"))
 
     return flow

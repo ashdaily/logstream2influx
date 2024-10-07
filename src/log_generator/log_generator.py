@@ -40,7 +40,7 @@ class LogGenerator:
 
     def generate_timestamp(self):
         """Generates a random timestamp within the past 30 days."""
-        past_days = 30
+        past_days = 30  # shouldn't be more than db retention policy
         start_date = datetime.datetime.now() - datetime.timedelta(days=past_days)
         random_seconds = random.randint(0, past_days * 24 * 60 * 60)
         return start_date + datetime.timedelta(seconds=random_seconds)
