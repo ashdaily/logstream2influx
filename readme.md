@@ -1,4 +1,18 @@
 ### Logs->BytewaxDataFLow->InfluxDB :
+
+#### What is logs2streaminflux ?
+- It's a simulation of real time generation of logs that are streamed and batch saved into time series database called Influx.
+
+### How can simulate log generation ?
+- Log generator does it for you automatically.
+
+### How can I save logs in the influxdb ?
+- Log processor does it for you. Be sure to go through this readme in-order to better understand how to work with InfluxDB.
+
+### Why do we want to save logs to influxdb ?
+- It's suitable when you want to perform operations on logs like aggregate sum of latency, calculate SLI and analyse log based on inbuilt InfluxDB functions.
+
+
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/9zWYBESC2GpoCp5xDEXCRq/YUvD74ity3tinAomZ6Lpke/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/9zWYBESC2GpoCp5xDEXCRq/YUvD74ity3tinAomZ6Lpke/tree/main)
 
 ```mermaid
