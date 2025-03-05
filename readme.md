@@ -3,7 +3,7 @@
 #### What is logs2streaminflux ?
 - It's a simulation of real time generation of logs that are streamed and batch saved into time series database called Influx.
 
-### How can simulate log generation ?
+### How can I simulate log generation ?
 - Log generator does it for you automatically.
 
 ### How can I save logs in the influxdb ?
